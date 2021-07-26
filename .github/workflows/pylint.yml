@@ -19,4 +19,8 @@ jobs:
         pip install pylint black
     - name: Analysing the code with pylint
       run: |
-        pylint `ls -R|grep .py$|xargs`
+        if [ -f *.py ]; then
+          pylint `ls -R *.py|xargs`
+        fi
+#          pylint `ls -R|grep .py$|xargs`
+
