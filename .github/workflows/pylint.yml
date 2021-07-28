@@ -23,7 +23,8 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         if [ -f *.py ]; then
-          pylint --jobs=0 --disable=w0613 `ls -R *.py|xargs`
+          black `ls -R *.py|xargs`
+          pylint `ls -R *.py|xargs`
         fi
 #          pylint `ls -R|grep .py$|xargs`
 
