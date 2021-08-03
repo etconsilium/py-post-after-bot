@@ -17,7 +17,7 @@ app = FastAPI()
 @app.get("/{param}")
 async def docroot(param=""):  # pylint: disable=unused-argument
     """ default route """
-    return "And They Have a Plan"
+    return "And they have a Plan"
 
 
 def main():

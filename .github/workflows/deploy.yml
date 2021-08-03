@@ -39,20 +39,35 @@ jobs:
 #          pylint `ls -R|grep .py$|xargs`
 
   deploy:
-    # https://github.com/BogDAAAMN/deta-deploy-action/blob/main/action.yml
+    
     runs-on: ubuntu-20.04
     needs: build
+
     steps:
     - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-        
+
+    # https://github.com/actions/checkout
+    - uses: actions/checkout@v2
+      name: Checkout
+      repository: ${{ github.repository }}
+      # The branch, tag or SHA to checkout. When checking out the repository that
+      # triggered a workflow, this defaults to the reference or SHA for that event.
+      # Otherwise, uses the default branch.
+      ref: 'dev'
+      # Relative path under $GITHUB_WORKSPACE to place the repository
+      path: ''
+    
+    # https://github.com/BogDAAAMN/deta-deploy-action/blob/main/action.yml    
     - name: Install Deta CLI
       shell: bash
       run: |
         curl -fsSL https://get.deta.dev/cli.sh | sh
     
+    - name: Install Deta CLI
+      repository: ''
     # Using the access token and existing Deta micro and project,
     # clone the micro and copy .deta metadata folder to use it in deploy
     # https://docs.deta.sh/docs/cli/commands#deta-clone
@@ -60,14 +75,14 @@ jobs:
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        ~/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} tmp/
-        cp -r tmp/.deta .
+        $(DETA_HOME)/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default tmp/
+        cp -r tmp/.deta .deta
         
     - name: Deploy to Deta
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        ~/.deta/bin/deta deploy
+        $(DETA_HOME)/bin/deta deploy
         
 env:
   icon: check-circle
