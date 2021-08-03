@@ -59,4 +59,4 @@ jobs:
         pip install deta 
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
         ~/.deta/bin/deta deploy
-        echo $PATH
+        
