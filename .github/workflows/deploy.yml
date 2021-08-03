@@ -62,4 +62,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install deta
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        python -m deta deploy
+        locate deta
+        ~/.deta/bin/deta deploy
