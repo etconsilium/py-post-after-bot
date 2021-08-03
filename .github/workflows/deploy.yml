@@ -64,4 +64,4 @@ jobs:
         #which deta
         #type deta
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        #~/.deta/bin/deta deploy
+        ~/.deta/bin/deta deploy
