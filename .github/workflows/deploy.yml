@@ -47,15 +47,28 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Deploy to Deta
-      #uses: BogDAAAMN/deta-deploy-action@v1.0.0
-      #with:
-      #  deta-access-token: ${{ secrets.DETA_PROJECT_KEY }} # Deta access token https://docs.deta.sh/docs/cli/auth
-      #  deta-name: ${{ secrets.DETA_PROJECT_NAME }} # Deta Micro name https://docs.deta.sh/docs/cli/commands/#deta-clone
-      #  deta-project: 'default' # default 'default' Deta project name https://docs.deta.sh/docs/cli/commands/#deta-clone
+        
+    - name: Install Deta CLI
       shell: bash
       run: |
         curl -fsSL https://get.deta.dev/cli.sh | sh
+    
+    # Using the access token and existing Deta micro and project,
+    # clone the micro and copy .deta metadata folder to use it in deploy
+    # https://docs.deta.sh/docs/cli/commands#deta-clone
+    - name: Clone Deta Metadata
+      shell: bash
+      run: |
+        export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
+        ~/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} tmp/
+        cp -r tmp/.deta .
+        
+    - name: Deploy to Deta
+      shell: bash
+      run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
         ~/.deta/bin/deta deploy
         
+env:
+  icon: check-circle
+  color: purple
