@@ -47,11 +47,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Deta
-      run: |
-        python -m pip install --upgrade pip
-        pip install deta 
-    - name: Deploy
+    - name: Deploy to Deta
       #uses: BogDAAAMN/deta-deploy-action@v1.0.0
       #with:
       #  deta-access-token: ${{ secrets.DETA_PROJECT_KEY }} # Deta access token https://docs.deta.sh/docs/cli/auth
@@ -59,6 +55,8 @@ jobs:
       #  deta-project: 'default' # default 'default' Deta project name https://docs.deta.sh/docs/cli/commands/#deta-clone
       shell: bash
       run: |
+        python -m pip install --upgrade pip
+        pip install deta 
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
         ~/.deta/bin/deta deploy
         echo $PATH
