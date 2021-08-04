@@ -60,11 +60,15 @@ jobs:
     - name: Environment
       shell: bash
       run: |
+        echo $TEMP
         if [ -n "${RUNNER_TEMP}" ]; then
+          echo "${RUNNER_TEMP}"
           export TEMP="${RUNNER_TEMP}"
         else
           export TEMP="${HOME}/tmp"
         fi
+        echo $TEMP
+        echo ${TEMP}
         env
 
     # https://github.com/actions/checkout
