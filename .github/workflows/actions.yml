@@ -24,7 +24,7 @@ jobs:
         # triggered a workflow, this defaults to the reference or SHA for that event.
         # Otherwise, uses the default branch.
         #ref: 'dev'
-        ref: ${GITHUB_REF}
+        ref: ${{ github.ref }}
         # Relative path under $GITHUB_WORKSPACE to place the repository
         #path: ''
     - name: Set up Python 3.7
