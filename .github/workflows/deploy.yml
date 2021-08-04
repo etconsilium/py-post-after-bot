@@ -1,6 +1,5 @@
-# This is a basic workflow to help you get started with Actions
 
-name: CI
+name: "Python lint && Deploy to Deta micro (corrected & bugfixed)"
 
 # Controls when the workflow will run
 on:
@@ -75,15 +74,15 @@ jobs:
       run: |
         env
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        $(HOME)/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default tmp/
+        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default tmp/
         cp -r tmp/.deta .deta
         
     - name: Deploy to Deta
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        $(HOME)/.deta/bin/deta deploy
+        ${HOME}/.deta/bin/deta deploy
         
-env:
-  icon: check-circle
-  color: purple
+# branding:
+#   icon: check-circle
+#   color: purple
