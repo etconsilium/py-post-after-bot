@@ -90,7 +90,7 @@ jobs:
         fi
         mkdir -p ${TEMP}
         echo ${TEMP}
-        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default ${TEMP}/
+        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default /${TEMP}/
         ls -a ${TEMP}
         cp -r ${TEMP}/.deta ./.deta
         rm -rf ${TEMP}
