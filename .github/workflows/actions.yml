@@ -1,5 +1,5 @@
 
-name: "Python lint && Deploy to Deta micro (corrected & bugfixed)"
+name: "Pylint && Deploy to Deta micro (corrected, bugfixed)"
 
 # Controls when the workflow will run
 on:
@@ -18,6 +18,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        repository: ${{ github.repository }}
+        # The branch, tag or SHA to checkout. When checking out the repository that
+        # triggered a workflow, this defaults to the reference or SHA for that event.
+        # Otherwise, uses the default branch.
+        #ref: 'dev'
+        ref: ${{GITHUB_REF}}
+        # Relative path under $GITHUB_WORKSPACE to place the repository
+        #path: ''
     - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
@@ -48,19 +57,6 @@ jobs:
       with:
         python-version: 3.7
 
-    # https://github.com/actions/checkout
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        repository: ${{ github.repository }}
-        # The branch, tag or SHA to checkout. When checking out the repository that
-        # triggered a workflow, this defaults to the reference or SHA for that event.
-        # Otherwise, uses the default branch.
-        #ref: 'dev'
-        ref: ${GITHUB_REF}
-        # Relative path under $GITHUB_WORKSPACE to place the repository
-        #path: ''
-
     - name: Environment
       shell: bash
       run: |
@@ -70,7 +66,17 @@ jobs:
           export TEMP="${HOME}/tmp"
         fi
         env
-    
+
+    # https://github.com/actions/checkout
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ github.repository }}
+        #ref: 'dev'
+        #ref: ${GITHUB_REF}
+        ref: ${{ github.ref }}
+        #path: ''
+
     # https://github.com/BogDAAAMN/deta-deploy-action/blob/main/action.yml    
     - name: Install Deta CLI
       shell: bash
