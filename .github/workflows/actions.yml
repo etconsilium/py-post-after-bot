@@ -60,8 +60,8 @@ jobs:
     - name: Environment
       shell: bash
       run: |
-        if [ -n "$RUNNER_TEMP" ]; then
-          export TEMP=${RUNNER_TEMP}
+        if [ -n "${RUNNER_TEMP}" ]; then
+          export TEMP="${RUNNER_TEMP}"
         else
           export TEMP="${HOME}/tmp"
         fi
@@ -72,8 +72,6 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: ${{ github.repository }}
-        #ref: 'dev'
-        #ref: ${GITHUB_REF}
         ref: ${{ github.ref }}
         #path: ''
 
