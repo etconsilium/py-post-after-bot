@@ -72,7 +72,7 @@ jobs:
 
     # https://github.com/BogDAAAMN/deta-deploy-action/blob/main/action.yml    
     - name: Install Deta CLI
-      shell: bash
+      shell: sh
       run: |
         curl -fsSL https://get.deta.dev/cli.sh | sh
     
@@ -83,17 +83,18 @@ jobs:
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
+
         if [ -n "${RUNNER_TEMP}" ]; then
           export TEMP="${RUNNER_TEMP}/_${{ secrets.DETA_PROJECT_NAME }}_"
         else
           export TEMP="${HOME}/tmp/_${{ secrets.DETA_PROJECT_NAME }}_"
         fi
         mkdir -p ${TEMP}
-        echo ${TEMP}
-        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default /${TEMP}/
-        ls -a ${TEMP}
-        cp -r ${TEMP}/.deta ./.deta
-        rm -rf ${TEMP}
+
+        # relative path only %(
+        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default _temp/_${{ secrets.DETA_PROJECT_NAME }}_
+        cp -r _temp/_${{ secrets.DETA_PROJECT_NAME }}_/.deta ./.deta
+        rm -rf _temp/_${{ secrets.DETA_PROJECT_NAME }}_
         
     - name: Deploy to Deta
       shell: bash
