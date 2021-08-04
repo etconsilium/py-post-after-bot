@@ -66,6 +66,7 @@ jobs:
           export TEMP="${HOME}/tmp/_${{ secrets.DETA_PROJECT_NAME }}_"
         fi
         mkdir -p ${TEMP}
+        ls -a ${TEMP}
         env
 
     # https://github.com/actions/checkout
@@ -89,6 +90,7 @@ jobs:
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
+        ls -a ${TEMP}
         ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default ${TEMP}/
         cp -r ${TEMP}/.deta ./.deta
         rm -rf ${TEMP}
