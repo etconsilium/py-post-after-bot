@@ -1,6 +1,5 @@
-# This is a basic workflow to help you get started with Actions
 
-name: CI
+name: "Python lint && Deploy to Deta micro (corrected & bugfixed)"
 
 # Controls when the workflow will run
 on:
@@ -56,13 +55,20 @@ jobs:
       # The branch, tag or SHA to checkout. When checking out the repository that
       # triggered a workflow, this defaults to the reference or SHA for that event.
       # Otherwise, uses the default branch.
-      ref: 'dev'
+      #ref: 'dev'
+      ref: ${GITHUB_REF}
       # Relative path under $GITHUB_WORKSPACE to place the repository
-      path: ''
+      #path: ''
 
-    - name: Envinronment
+    - name: Environment
       shell: bash
-      run: env
+      run: |
+        if [ -n "$GITHUB_ACTIONS" ]; then
+          export TEMP=${RUNNER_TEMP}
+        else
+          export TEMP="${HOME}/tmp"
+        fi
+        env
     
     # https://github.com/BogDAAAMN/deta-deploy-action/blob/main/action.yml    
     - name: Install Deta CLI
@@ -70,22 +76,23 @@ jobs:
       run: |
         curl -fsSL https://get.deta.dev/cli.sh | sh
     
-      # Using the access token and existing Deta micro and project,
-      # clone the micro and copy .deta metadata folder to use it in deploy
-      # https://docs.deta.sh/docs/cli/commands#deta-clone
+    # Using the access token and existing Deta micro and project,
+    # clone the micro and copy .deta metadata folder to use it in deploy
+    # https://docs.deta.sh/docs/cli/commands#deta-clone
     - name: Clone Deta Metadata
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        $(DETA_HOME)/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default tmp/
-        cp -r tmp/.deta .deta
+        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default ${TEMP}/
+        cp -r ${TEMP}/.deta ./.deta
+        rm -rf ${TEMP}
         
     - name: Deploy to Deta
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        $(DETA_HOME)/bin/deta deploy
+        ${HOME}/.deta/bin/deta deploy
         
-env:
-  icon: check-circle
-  color: purple
+# branding:
+#   icon: check-circle
+#   color: purple
