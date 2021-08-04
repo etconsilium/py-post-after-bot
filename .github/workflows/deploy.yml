@@ -73,15 +73,16 @@ jobs:
     - name: Clone Deta Metadata
       shell: bash
       run: |
+        env
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        $(DETA_HOME)/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default tmp/
+        $(HOME)/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default tmp/
         cp -r tmp/.deta .deta
         
     - name: Deploy to Deta
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        $(DETA_HOME)/bin/deta deploy
+        $(HOME)/.deta/bin/deta deploy
         
 env:
   icon: check-circle
