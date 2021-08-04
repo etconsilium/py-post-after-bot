@@ -67,8 +67,6 @@ jobs:
       run: |
         curl -fsSL https://get.deta.dev/cli.sh | sh
     
-    - name: Install Deta CLI
-      repository: ''
     # Using the access token and existing Deta micro and project,
     # clone the micro and copy .deta metadata folder to use it in deploy
     # https://docs.deta.sh/docs/cli/commands#deta-clone
