@@ -65,8 +65,10 @@ jobs:
         else
           export TEMP="${HOME}/tmp/_${{ secrets.DETA_PROJECT_NAME }}_"
         fi
-        mkdir -p ${TEMP}
-        ls -a ${TEMP}
+        echo "${RUNNER_TEMP}" 
+        echo $TEMP
+        mkdir -p $TEMP
+        ls -a $TEMP
         env
 
     # https://github.com/actions/checkout
