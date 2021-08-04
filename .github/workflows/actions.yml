@@ -90,9 +90,9 @@ jobs:
       shell: bash
       run: |
         export DETA_ACCESS_TOKEN=${{ secrets.DETA_PROJECT_KEY }}
-        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default ${TEMP}/
-        cp -r ${TEMP}/.deta ./.deta
-        rm -rf ${TEMP}
+        ${HOME}/.deta/bin/deta clone --name ${{ secrets.DETA_PROJECT_NAME }} --project default ${TEMP}/_${{ secrets.DETA_PROJECT_NAME }}_/
+        cp -r ${TEMP}/_${{ secrets.DETA_PROJECT_NAME }}_/.deta ./.deta
+        rm -rf ${TEMP}/_${{ secrets.DETA_PROJECT_NAME }}_
         
     - name: Deploy to Deta
       shell: bash
