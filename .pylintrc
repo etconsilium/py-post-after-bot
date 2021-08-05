@@ -75,7 +75,8 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=
-		#unused-argument,	# w0613
+		#unused-argument,	#	w0613
+		consider-using-sys-exit,	#	R1722: Consider using sys.exit()
 		
 		print-statement,
         parameter-unpacking,
@@ -269,10 +270,42 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=i,
+good-names=
+           a,
+           b,
+           c,
+           d,
+           e,
+           f,
+           g,
+           h,
+           i,
            j,
            k,
+           m,
+           n,
+           o,
+           p,
+           r,
+           q,
+           s,
+           t,
+           u,
+           v,
+           x,
+           y,
+           z,
+           ar,
+           arr,
+           cx,
            ex,
+           exp,
+           db,
+           dbh,
+           fh,
+           id,
+           req,
+           res,
            Run,
            _
 

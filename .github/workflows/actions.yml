@@ -42,7 +42,7 @@ jobs:
       run: |
         if [ -f *.py ]; then
           black `ls -R *.py|xargs`
-          pylint `ls -R *.py|xargs`
+          pylint --disable=R,C `ls -R *.py|xargs`
         fi
 #          pylint `ls -R|grep .py$|xargs`
 
