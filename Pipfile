@@ -1,0 +1,31 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = false
+
+[dev-packages]
+var-dump = "*"
+uvicorn = "*"
+autoversion = "*"
+yq = "*"
+deta = "*"
+#pip = "==21.2.3"
+pylint = "*"
+
+[packages]
+dotenv-config = "*"
+fastapi = "*"
+loguru = "*"
+pytelegrambotapi = "*"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+start = "uvicorn main:app --reload --host=$SERVICE_HOST --port=$SERVICE_PORT"
+#start = "uvicorn main:app --reload"
+server = "uvicorn main:server --host=$SERVICE_HOST --port=$SERVICE_PORT"
+freeze = "pip freeze | tee requirements.txt"
+#	разные форматы о\
+prep = "pipenv lock -r -d > req-all.txt"
+preprod = "pipenv lock -r > req-prod.txt"
