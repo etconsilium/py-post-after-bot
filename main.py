@@ -7,21 +7,25 @@
 module description
 """
 
-# pylint:    disable=R
-# pylint:    disable=unused-import
+# pylint:    disable=e0401
+# pylint:    disable=c0112,c0116
 
-# import os
+
 # import time
 # import json
-# import os
 # import requests
+import os
 import telebot
 
 from var_dump import var_dump
-from dotenv_config import Config
+from dotenv import load_dotenv
+from dotenv import dotenv_values
+from hashlib import sha1
+from urllib.parse import urlunparse
+from urllib.parse import urljoin
+from loguru import logger as log
 
 # from tqdm import tqdm
-from loguru import logger as log
 from telebot import TeleBot
 from telebot import apihelper
 from telebot import types
@@ -30,19 +34,57 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 
 from fastapi import FastAPI
 
+load_dotenv('.env')
+config = dotenv_values('.env')
+
+FILE_TOKEN = str(os.stat(__file__))
+TG_TOKEN = os.getenv("TG_TOKEN", ">_<`")
+WEBHOOK_DOMAIN = os.getenv('WEBHOOK_DOMAIN', '')
+WEBHOOK_PATH = os.getenv('WEBHOOK_PATH', '/bot')
+WEBHOOK_URL = (
+    WEBHOOK_PATH
+    + '/'
+    + sha1(f"{FILE_TOKEN}:{TG_TOKEN}".encode('utf8')).hexdigest()
+    + '/'
+)
+
+
 app = FastAPI()
+bot = telebot.TeleBot(TG_TOKEN)
 
+# @app.post("/{token}/")
+@app.post(WEBHOOK_URL)
+async def webhook(data):
+    ''' process only requests with correct bot token'''
+    log.info(data)
+    return app.response(200)
 
-config = Config(".env")
-tg_token = config("TOKEN")
-bot = telebot.TeleBot(tg_token)
+    if request.match_info.get("token") == bot.token:
+        request_body_dict = await request.json()
+        update = telebot.types.Update.de_json(request_body_dict)
+        bot.process_new_updates([update])
+        status = 200
+    else:
+        status = 403
+
+    return app.response(status)
 
 
 @app.get("/")
-@app.get("/{param}")
-async def docroot(param=""):  # pylint: disable=unused-argument
+async def docroot():
     """ default route """
+    if FILE_TOKEN != str(os.stat(__file__)):
+        FILE_TOKEN = str(os.stat(__file__))
+        set_webhook()
+
     return "And They Have a Plan"
+
+
+@app.get("/{param}")
+@app.get("/{param}/")
+async def any(param=""):  # pylint: disable=unused-argument
+    """ default route """
+    return "And They Have a Plan : " + param
 
 
 @bot.message_handler(commands=["start", "help"])
@@ -79,24 +121,36 @@ def send_pdf(message):
 
 
 def set_webhook():
-    """"""
-    if config("WEBHOOK_URL"):
-        wh_url = "{}:{}{}".format(
-            config("WEBHOOK_URL"), config("WEBHOOK_PORT"), config("WEBHOOK_PATH")
-        )
-        bot.remove_webhook()
-        bot.set_webhook(url=wh_url)
+    bot.delete_webhook()
+    log.warning(f"{WEBHOOK_DOMAIN}{WEBHOOK_URL}")
+    # def set_webhook(token, url=None, certificate=None, max_connections=None, allowed_updates=None, ip_address=None,
+    #             drop_pending_updates = None, timeout=None):
+    bot.set_webhook(
+        url=f"{WEBHOOK_DOMAIN}{WEBHOOK_URL}", allowed_updates=True, timeout=30
+    )
+    log.debug(bot.get_webhook_info())
 
 
 def main():
     """Start here"""
-    log.debug("Start here")
+    log.info("Start main()")
+    import uvicorn
 
-    bot.polling(none_stop=True, timeout=20)
-    #    set_webhook()
+    uvicorn.run(app)
+
+    # bot.polling(none_stop=True, timeout=20)
+    bot.set_webhook()
 
     exit("Bot exited")
 
 
 if __name__ == "__main__":
+
+    log.debug(config)
+    log.info('bot')
+    log.info(bot)
+
+    log.debug(TG_TOKEN)
+    log.warning(WEBHOOK_URL)
+
     main()

@@ -13,18 +13,18 @@ deta = "*"
 pylint = "*"
 
 [packages]
-dotenv-config = "*"
 fastapi = "*"
 loguru = "*"
 pytelegrambotapi = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
-start = "uvicorn main:app --reload --host=$SERVICE_HOST --port=$SERVICE_PORT"
-#start = "uvicorn main:app --reload"
-server = "uvicorn main:server --host=$SERVICE_HOST --port=$SERVICE_PORT"
+#start = "uvicorn main:app --reload --host=$SERVICE_HOST --port=$SERVICE_PORT"
+start = "uvicorn main:app --reload"
+server = "uvicorn main:app --host=$SERVICE_HOST --port=$SERVICE_PORT"
 freeze = "pip freeze | tee requirements.txt"
 #	разные форматы о\
 prep = "pipenv lock -r -d > req-all.txt"
