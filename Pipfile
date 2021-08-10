@@ -7,8 +7,6 @@ verify_ssl = false
 var-dump = "*"
 uvicorn = "*"
 autoversion = "*"
-yq = "*"
-deta = "*"
 #pip = "==21.2.3"
 pylint = "*"
 
