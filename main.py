@@ -48,6 +48,8 @@ WEBHOOK_URL = (
     + '/'
 )
 
+log.debug(FILE_TOKEN)
+log.debug(WEBHOOK_URL)
 
 app = FastAPI()
 bot = telebot.TeleBot(TG_TOKEN)
