@@ -8,6 +8,7 @@ var-dump = "*"
 uvicorn = "*"
 autoversion = "*"
 #pip = "==21.2.3"
+stop-words = "*"
 pylint = "*"
 
 [packages]
