@@ -169,60 +169,57 @@ async def docroot(param=""):  # pylint: disable=unused-argument
     return f"And They Have a Plan : {FILE_TOKEN}"
 
 
-# @bot.message_handler(commands=['start'])
-# def start(message):
-#     bot.send_message(message.chat.id, 'It works!')
-#
+BEEP_STATUS = None
 
 
 @bot.message_handler(commands=["start"])
-def welcome_message(message: types.Update):
+def start_command(message: types.Update):
+    print("start here")
 
     t = message.entities[0]
     if len(message.text) > t.length:
         # bot.send_message(message.chat.id, 'start abonent box')
-        beep_command(message)
+        BEEP_STATUS = 1
+        start_beep(message)
     else:
         # bot.send_message(message.chat.id, 'start text')
-        help_command(message)
+        welcome_message(message)
     return
 
 
 @bot.message_handler(commands=["help"])
 def help_command(message: types.Update):
-    bot.reply_to(message, message.text)
+    text = """
+/beep - [секретик] : записать приветственное сообщение
+/start - секретик : отправить сообщение абоненту 
+/beep - beep (два раза) : прочитать сообщения
+/check - проверить сообщения (как два бип)
+/source - sourcecode
+/help - список команд
+
+/beep - [секретик] [Привет!] записать приветственное сообщение
+/beepbeep - прочитать сообщения
+/check - проверить сообщения
+/source - показать исходный код (для разработчиков)
+/help - список команд
+"""
+    bot.send_message(message.chat.id, text)
+    # bot.reply_to(message, message.text)
     return
 
 
 @bot.message_handler(commands=["beep"])
-def beep_command(message):  #   : types.Update):
+def beep_command(message: types.Update):
 
-    t = message.entities[0]
-    abonent_box = (message.text[t.offset + t.length :]).strip().upper()
+    beep = 'beep'
 
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    buttonB = types.KeyboardButton('/Beep!')
-    markup.row(buttonB)
+    return
 
-    # InlineKeyboardButton(text, url=None, callback_data=None, switch_inline_query=None, switch_inline_query_current_chat=None, callback_game=None, pay=None, login_url=None, **_kwargs)
-    # markup = types.InlineKeyboardMarkup()
-    # buttonB = types.InlineKeyboardButton('Beep!')
-    # markup.row(buttonB)
 
-    # user_id = message.from.id
-    chat_id = message.chat.id
+@bot.message_handler(commands=["check"])
+def check_command(message: types.Update):
 
-    """
-    allowed html tags
-    <b>bold</b>, <strong>bold</strong> <i>italic</i>, <em>italic</em> <a href="URL">inline URL</a>
-    <code>inline fixed-width code</code> <pre>pre-formatted fixed-width code block</pre>
-    """
-    text = (
-        f"Hi there, You have reached the postponement machine with a combination <b><code>{abonent_box}</code></b>. Post a message after the /Beep!"
-        + os.linesep * 2
-        + f"Нажмите кнопку и напишите сообщение для абонента с кодом <b>{abonent_box}</b>"
-    )
-    bot.send_message(message.chat.id, text, reply_markup=markup)
+    echo_message(message)
 
     return
 
@@ -248,12 +245,62 @@ def source_command(message: types.Update):
     return
 
 
-# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
-# @bot.message_handler(func=lambda message: True)
+@bot.message_handler(commands=["beep"])
+def start_beep(message: types.Update):
+
+    global BEEP_STATUS
+    beep = 'Beep'
+
+    t = message.entities[0]
+
+    if len(message.text) > t.length:
+
+        BEEP_STATUS = 2 if 1 == BEEP_STATUS else 1
+
+        abonent_box = (message.text[t.offset + t.length :]).strip()
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    buttonB = types.KeyboardButton(f'/{beep}!')
+    markup.row(buttonB)
+
+    # InlineKeyboardButton(text, url=None, callback_data=None, switch_inline_query=None, switch_inline_query_current_chat=None, callback_game=None, pay=None, login_url=None, **_kwargs)
+    # markup = types.InlineKeyboardMarkup()
+    # buttonB = types.InlineKeyboardButton('Beep!')
+    # markup.row(buttonB)
+
+    # user_id = message.from.id
+    chat_id = message.chat.id
+
+    """
+    allowed html tags
+    <b>bold</b>, <strong>bold</strong> <i>italic</i>, <em>italic</em> <a href="URL">inline URL</a>
+    <code>inline fixed-width code</code> <pre>pre-formatted fixed-width code block</pre>
+    """
+    text = (
+        f"Hi there, You have reached the postponement machine with a combination <a href='https://t.me/post_after_bot?start={abonent_box}'><b>{abonent_box.upper()}</b></a>. "
+        + f" Post a message after the {beep}!"
+        + os.linesep * 2
+        + f"Нажмите кнопку и напишите сообщение для абонента с кодовым именем <a href='https://t.me/post_after_bot?start={abonent_box}'><b>{abonent_box.upper()}</b></a>"
+    )
+    bot.send_message(message.chat.id, text, reply_markup=markup)
+
+    return
+
+
 @bot.message_handler(content_types=["text"])
 def echo_message(message: types.Update):
     # bot.reply_to(message, message.text)
     bot.send_message(message.chat.id, message.text)
+    return
+
+
+# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
+@bot.message_handler(func=lambda message: True)
+def welcome_message(message: types.Update):
+    # bot.reply_to(message, message.text)
+    # bot.send_message(message.chat.id, message.text)
+    bot.send_message(message.chat.id, 'welcome')
+    return
 
 
 def main():
