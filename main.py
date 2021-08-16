@@ -15,15 +15,16 @@ module description
 # import requests
 import os
 import json
-import telebot
 
-from var_dump import var_dump
+from hashlib import sha1
 from dotenv import load_dotenv
 from dotenv import dotenv_values
-from hashlib import sha1
 from loguru import logger as log
+from var_dump import var_dump
 
 # from tqdm import tqdm
+
+import telebot
 from telebot import TeleBot
 from telebot import apihelper
 from telebot import types
@@ -85,7 +86,7 @@ def wh_path():
 
 
 FILE_TOKEN = file_hash()
-TG_TOKEN = os.getenv("TG_TOKEN", ">_<`")
+TG_TOKEN = os.getenv("TG_TOKEN", "#_#")
 TG_MAX_CONNECTION = int(os.getenv("TG_MAX_CONNECTION", 40))
 TG_DROP_UPDATES = bool(os.getenv("TG_DROP_UPDATES", None))
 TG_TIMEOUT = int(os.getenv("TG_TIMEOUT", 10))
@@ -105,7 +106,7 @@ bot = telebot.TeleBot(
 
 
 def set_webhook():
-    global FILE_TOKEN, WEBHOOK_DOMAIN, WEBHOOK_URL
+    global FILE_TOKEN, WEBHOOK_DOMAIN, WH_URL
     bot.remove_webhook()
     fh = file_hash()
     if FILE_TOKEN != fh:
@@ -132,6 +133,7 @@ def set_webhook():
     log.debug(bot.get_webhook_info())
 
 
+# pylint: disable=unused-argument
 @app.post(WH_PATH, response_class=Response, status_code=200)
 async def webhook(request: Request, response: Response, payload: dict = Body(...)):
     ''' process only requests with correct bot token'''
@@ -158,13 +160,13 @@ async def webhook(request: Request, response: Response, payload: dict = Body(...
 @app.get("/", response_class=HTMLResponse, status_code=403)
 @app.get("/{param}", response_class=HTMLResponse, status_code=403)
 @app.get("/{param}/", response_class=HTMLResponse, status_code=403)
-async def any(param=""):  # pylint: disable=unused-argument
+async def docroot(param=""):  # pylint: disable=unused-argument
     """ default route """
     set_webhook()
 
     global FILE_TOKEN
 
-    return f"And They Have a Plan <br>({FILE_TOKEN})"
+    return f"And They Have a Plan : {FILE_TOKEN}"
 
 
 # @bot.message_handler(commands=['start'])
@@ -179,27 +181,27 @@ def welcome_message(message: types.Update):
     t = message.entities[0]
     if len(message.text) > t.length:
         # bot.send_message(message.chat.id, 'start abonent box')
-        beep_message(message)
+        beep_command(message)
     else:
         # bot.send_message(message.chat.id, 'start text')
-        help_message(message)
+        help_command(message)
     return
 
 
 @bot.message_handler(commands=["help"])
-def help_message(message: types.Update):
+def help_command(message: types.Update):
     bot.reply_to(message, message.text)
     return
 
 
 @bot.message_handler(commands=["beep"])
-def beep_message(message):  #   : types.Update):
+def beep_command(message):  #   : types.Update):
 
     t = message.entities[0]
-    abonent_box = (message.text[t.offset + t.length :]).strip()
+    abonent_box = (message.text[t.offset + t.length :]).strip().upper()
 
-    markup = types.ReplyKeyboardMarkup(row_width=1)
-    buttonB = types.KeyboardButton('Beep!')
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    buttonB = types.KeyboardButton('/Beep!')
     markup.row(buttonB)
 
     # InlineKeyboardButton(text, url=None, callback_data=None, switch_inline_query=None, switch_inline_query_current_chat=None, callback_game=None, pay=None, login_url=None, **_kwargs)
@@ -210,12 +212,38 @@ def beep_message(message):  #   : types.Update):
     # user_id = message.from.id
     chat_id = message.chat.id
 
+    """
+    allowed html tags
+    <b>bold</b>, <strong>bold</strong> <i>italic</i>, <em>italic</em> <a href="URL">inline URL</a>
+    <code>inline fixed-width code</code> <pre>pre-formatted fixed-width code block</pre>
+    """
     text = (
-        "Hi there, You have reached the postponement machine with a combination <b>{abonent_box}</b>. Post a message after the Beep!"
+        f"Hi there, You have reached the postponement machine with a combination <b><code>{abonent_box}</code></b>. Post a message after the /Beep!"
         + os.linesep * 2
         + f"Нажмите кнопку и напишите сообщение для абонента с кодом <b>{abonent_box}</b>"
     )
     bot.send_message(message.chat.id, text, reply_markup=markup)
+
+    return
+
+
+@bot.message_handler(commands=["source"])
+def source_command(message: types.Update):
+    # bot.reply_to(message, '<pre>' + open(__file__, "rb") + '</pre>')
+
+    from pathlib import Path
+
+    MAX_LENGHT = 4096
+    # MAX_LENGHT = 8192
+    # r = '<pre>' + Path(__file__).read_text() + '</pre>'
+    r = Path(__file__).read_text()
+    if len(r) > MAX_LENGHT:
+        for x in range(0, len(r), MAX_LENGHT):
+            bot.send_message(
+                message.chat.id,
+                '<pre><code>{}</code></pre>'.format(r[x : x + MAX_LENGHT]),
+                parse_mode=None,
+            )
 
     return
 
