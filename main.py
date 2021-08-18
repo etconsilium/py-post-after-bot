@@ -44,22 +44,19 @@ from fastapi.responses import RedirectResponse
 load_dotenv('.env')
 config = dotenv_values('.env')
 
-FILE_TOKEN = TG_TOKEN = WEBHOOK_DOMAIN = WEBHOOK_PATH = WEBHOOK_URL = None
+FILE_TOKEN = WEBHOOK_DOMAIN = WEBHOOK_PATH = WEBHOOK_URL = None
 
-ALLOWED_UPDATES = [
-    'message',
-    'edited_message',
-    'channel_post',
-    'edited_channel_post',
-    'inline_query',
-    'chosen_inline_result',
-    'callback_query',
-    'shipping_query',
-    'poll',
-    'poll_answer',
-    'my_chat_member',
-    'chat_member',
-]
+
+TG_TOKEN = os.getenv('TG_TOKEN', "#_#")
+TG_MAX_CONNECTION = int(os.getenv('TG_MAX_CONNECTION', 40))
+TG_DROP_UPDATES = bool(os.getenv('TG_DROP_UPDATES', None))
+TG_TIMEOUT = int(os.getenv('TG_TIMEOUT', 10))
+TG_PARSE_MODE = os.getenv('TG_PARSE_MODE', None)
+
+# https://habr.com/ru/company/ods/blog/462141/
+app = FastAPI()
+# bot = telebot.TeleBot(TG_TOKEN, threaded=False, parse_mode=TG_PARSE_MODE)
+bot = telebot.TeleBot(TG_TOKEN, parse_mode=TG_PARSE_MODE)
 
 
 def file_hash(filename=__file__):
@@ -85,58 +82,83 @@ def wh_path():
     )
 
 
-FILE_TOKEN = file_hash()
-TG_TOKEN = os.getenv("TG_TOKEN", "#_#")
-TG_MAX_CONNECTION = int(os.getenv("TG_MAX_CONNECTION", 40))
-TG_DROP_UPDATES = bool(os.getenv("TG_DROP_UPDATES", None))
-TG_TIMEOUT = int(os.getenv("TG_TIMEOUT", 10))
+def set_webhook():
+    global FILE_TOKEN, WEBHOOK_DOMAIN, WH_URL
 
+    bot_nfo = bot.get_webhook_info()
+    # {
+    #     "ok": true,
+    #     "result": {
+    #         "url": "",
+    #         "has_custom_certificate": false,
+    #         "pending_update_count": 9,
+    #     },
+    # }
+    if WH_URL != bot_nfo.url:
+        FILE_TOKEN = file_hash()
+        WH_URL = wh_url()
+
+        bot.remove_webhook()
+        # def set_webhook(token, url=None, certificate=None, max_connections=None, allowed_updates=None, ip_address=None,
+        #             drop_pending_updates = None, timeout=None):
+        bot.set_webhook(
+            url=WH_URL,
+            max_connections=TG_MAX_CONNECTION,
+            timeout=TG_TIMEOUT,
+            allowed_updates=[],
+            # allowed_updates=ALLOWED_UPDATES,
+            drop_pending_updates=TG_DROP_UPDATES,
+        )
+
+    log.debug(bot.get_webhook_info())
+
+    return
+
+
+####
+##
+# Begin
+#
+
+
+# A JSON-serialized list of the update types you want your bot to receive. For example, specify [“message”, “edited_channel_post”, “callback_query”] to only receive updates of these types. See Update for a complete list of available update types. Specify an empty list to receive all update types except chat_member (default). If not specified, the previous setting will be used.
+# https://core.telegram.org/bots/api#getting-updates
+ALLOWED_UPDATES = [
+    'message',
+    'edited_message',
+    'channel_post',
+    'edited_channel_post',
+    'inline_query',
+    'chosen_inline_result',
+    'callback_query',
+    'shipping_query',
+    'poll',
+    'poll_answer',
+    'my_chat_member',
+    'chat_member',
+]
+
+
+FILE_TOKEN = file_hash()
 WEBHOOK_DOMAIN = os.getenv('WEBHOOK_DOMAIN', '')
 WEBHOOK_PATH = os.getenv('WEBHOOK_PATH', '/bot')
 WEBHOOK_PORT = os.getenv('WEBHOOK_PORT', '')
 WH_PATH = wh_path()
 WH_URL = wh_url()
 
-# https://habr.com/ru/company/ods/blog/462141/
-app = FastAPI()
-bot = telebot.TeleBot(
-    TG_TOKEN, threaded=False, parse_mode=os.getenv("TG_PARSE_MODE", None)
-)
-# bot.polling(none_stop=True, timeout=10)
 
+if os.getenv('TG_MODE') == 'updates':
+    bot.polling(none_stop=True, timeout=TG_TIMEOUT)
+else:
+    set_webhook()
 
-def set_webhook():
-    global FILE_TOKEN, WEBHOOK_DOMAIN, WH_URL
-    bot.remove_webhook()
-    fh = file_hash()
-    if FILE_TOKEN != fh:
-        FILE_TOKEN = fh
-
-    WH_URL = wh_url()
-
-    # def set_webhook(token, url=None, certificate=None, max_connections=None, allowed_updates=None, ip_address=None,
-    #             drop_pending_updates = None, timeout=None):
-
-    #
-    # A JSON-serialized list of the update types you want your bot to receive. For example, specify [“message”, “edited_channel_post”, “callback_query”] to only receive updates of these types. See Update for a complete list of available update types. Specify an empty list to receive all update types except chat_member (default). If not specified, the previous setting will be used.
-    # https://core.tlgr.org/bots/api#getting-updates
-    #
-    bot.set_webhook(
-        url=WH_URL,
-        max_connections=TG_MAX_CONNECTION,
-        timeout=TG_TIMEOUT,
-        allowed_updates=[],
-        # allowed_updates=ALLOWED_UPDATES,
-        drop_pending_updates=TG_DROP_UPDATES,
-    )
-
-    log.debug(bot.get_webhook_info())
+BEEP_STATUS = None
 
 
 # pylint: disable=unused-argument
 @app.post(WH_PATH, response_class=Response, status_code=200)
 async def webhook(request: Request, response: Response, payload: dict = Body(...)):
-    ''' process only requests with correct bot token'''
+    '''process only requests with correct bot token'''
 
     # payload = json.loads( await request.body() )
 
@@ -169,9 +191,6 @@ async def docroot(param=""):  # pylint: disable=unused-argument
     return f"And They Have a Plan : {FILE_TOKEN}"
 
 
-BEEP_STATUS = None
-
-
 @bot.message_handler(commands=["start"])
 def start_command(message: types.Update):
     print("start here")
@@ -195,12 +214,6 @@ def help_command(message: types.Update):
 /beep - beep (два раза) : прочитать сообщения
 /check - проверить сообщения (как два бип)
 /source - sourcecode
-/help - список команд
-
-/beep - [секретик] [Привет!] записать приветственное сообщение
-/beepbeep - прочитать сообщения
-/check - проверить сообщения
-/source - показать исходный код (для разработчиков)
 /help - список команд
 """
     bot.send_message(message.chat.id, text)
