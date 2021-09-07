@@ -10,12 +10,14 @@ autoversion = "*"
 #pip = "==21.2.3"
 stop-words = "*"
 pylint = "*"
+session-client = "*"
 
 [packages]
 fastapi = "*"
 loguru = "*"
 pytelegrambotapi = "*"
 python-dotenv = "*"
+deta = "*"
 
 [requires]
 python_version = "3.7"

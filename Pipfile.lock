@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c56b5539323ecbd6623752af3d061d425ac0b51c054e50108be57f13ccfe570d"
+            "sha256": "567740729f826876a8abf227811180c015268d2cb55f438e37c0e132397e2f99"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -38,6 +38,14 @@
             ],
             "markers": "sys_platform == 'win32'",
             "version": "==0.4.4"
+        },
+        "deta": {
+            "hashes": [
+                "sha256:dccb33156ce2f09f609d2c94331f36b28502b9e2db78365fd841b6a8d2a90de1",
+                "sha256:f39ca5dde93426d6885d5191e0269b7da0db0fd78b3c4543c8b81d17c9efdc43"
+            ],
+            "index": "pypi",
+            "version": "==1.0.0"
         },
         "fastapi": {
             "hashes": [
@@ -93,10 +101,10 @@
         },
         "pytelegrambotapi": {
             "hashes": [
-                "sha256:cf83c652b88b4b1535a306a9b0c2f34bf6c390cebb9553ef34369e6290fc9496"
+                "sha256:afdd887fff42a963f13d09a1f4f5fd24aef08f4b8a594f2ac11e0a29022f1518"
             ],
             "index": "pypi",
-            "version": "==3.8.2"
+            "version": "==3.8.3"
         },
         "python-dotenv": {
             "hashes": [
@@ -245,6 +253,13 @@
             ],
             "index": "pypi",
             "version": "==2.9.6"
+        },
+        "session-client": {
+            "hashes": [
+                "sha256:618f2b61a912f233a99b389201d9ea33ff8eea4515172c2c1757880bad0c08d2"
+            ],
+            "index": "pypi",
+            "version": "==0.0.0"
         },
         "stop-words": {
             "hashes": [
