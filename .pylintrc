@@ -32,8 +32,15 @@ ignore-patterns=
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-#init-hook=
-init-hook="from pylint.config import find_pylintrc; from os.path import dirname; import sys; import os, sys; print( sys.executable ); print( sys.exec_prefix ); print( sys.path ); sys.path.reverse(); print( sys.path ); pylint_path=os.path.dirname(find_pylintrc()); sys.path.insert(0,find_pylintrc()); sys.path.insert(0,pylint_path+'/../Lib'); sys.path.insert(0,pylint_path+'/../lib'); print(sys.path);"
+#init-hook=""
+# one line script
+init-hook="import sys; from os import sep as dir_sep, getcwd as cwd; from pylint import config as plc; _prefix=sys.exec_prefix; _pylint=plc.PYLINTRC[: plc.PYLINTRC.rfind(dir_sep)]; sys.path=[cwd()]+sys.path; _ar=[(_prefix,_pylint)]*len(sys.path); _arve=[(_prefix,_pylint+dir_sep+'.venv')]*len(sys.path); _r=lambda p, r: p.replace(r[0],r[1]) if p.startswith(r[0]) else p; _p=[]; (not _prefix.startswith(_pylint)) and _p.extend( list(map(_r,sys.path,_arve))+list(map(_r,sys.path,_ar)) ); sys.path=_p+sys.path;"
+
+#init-hook="import os, sys, pylint; from pylint import config as plc; from pylint.config import find_pylintrc; _pre=sys.exec_prefix; _pyl=plc.PYLINTRC[: plc.PYLINTRC.rfind(os.sep)]; _p=[os.getcwd(),_pyl,_pre]; print(plc); _p = _p + [ p.replace(sys.exec_prefix, os.path.dirname(pylint.config.find_pylintrc()) ) for p in sys.path ] ; sys.path=_p+sys.path; print(sys.path);"
+#init-hook="import os, sys, pylint, pylint.config; _pylint=config.PYLINTRC[:config.PYLINTRC.rfind(os.sep)]; _prefix=sys.exec_prefix; _p=[]; (_pylint not in _prefix) or (_p.append( [os.getcwd(),_pylint] ) + [p.replace(_prefix, _pylint) for p in sys.path if p.find(_prefix) >= 0] ) ) ; print( os.getcwd(), sys.path);"
+
+# include external file
+#init-hook="import sys; from sys import path; from os.path import dirname; from os.path import exists as path_exists; from pylint.config import find_pylintrc; path.append(dirname(find_pylintrc())); path_exists('pylintrc.py') and exec('import pylintrc;'); sys.path = pylintrc.sys_path + path;"
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use.
