@@ -19,6 +19,7 @@ pytelegrambotapi = "*"
 python-dotenv = "*"
 loguru = "*"
 deta = "*"
+dateparser = "*"
 
 [requires]
 python_version = "3.7"
