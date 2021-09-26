@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 ##
 ##
 #
 #
-
 """# Do NOT attempt duplicate the hacks used here without consulting your pythia first"""
 
 
@@ -86,7 +84,7 @@ class BasicModel(object):
         # return self    # __init__
 
     def __dir__(self) -> dict:
-        """dir() вернёт список легитимных атрибутов, а для избранных __dir__() -- словарь данных"""
+        """dir() вернёт список легитимных атрибутов, а __dir__() -- словарь данных для избранных"""
         return dict(
             (
                 k,
@@ -232,7 +230,6 @@ class Record(BasicModel):
     """Damn answering machine tapes!"""
 
     # _save_on_exit = False
-
     _created = "now"
     _expires = "in 3 days"
 
