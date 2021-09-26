@@ -4,16 +4,16 @@ astroid==2.7.3
 autoversion==1.2.2
 backports.zoneinfo==0.2.1
 certifi==2021.5.30
-charset-normalizer==2.0.4
+charset-normalizer==2.0.6
 click==8.0.1
 colorama==0.4.4
 dateparser==1.0.0
 deta==1.0.0
 fastapi==0.68.1
 h11==0.12.0
-idna==3.2
 isort==5.9.3
 lazy-object-proxy==1.6.0
+lib==3.0.0
 loguru==0.5.3
 mccabe==0.6.1
 platformdirs==2.3.0
@@ -24,7 +24,7 @@ python-dateutil==2.8.2
 python-dotenv==0.19.0
 pytz==2021.1
 PyYAML==5.4.1
-regex==2021.8.28
+regex==2021.9.24
 requests==2.26.0
 session-client==0.0.0
 six==1.16.0
@@ -34,7 +34,7 @@ toml==0.10.2
 typing-extensions==3.10.0.2
 tzdata==2021.1
 tzlocal==3.0
-urllib3==1.26.6
+urllib3==1.26.7
 uvicorn==0.15.0
 var-dump==1.2
 win32-setctime==1.0.3

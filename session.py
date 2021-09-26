@@ -2,17 +2,25 @@
 ##
 #
 #
-from models import Record
+from db import dateparser
+from models import BasicModel, Record
 
-
+# class Session(BasicModel):
 class Session(Record):
     """
     classdocs
     """
 
+    _tablename = "SESSION"
 
-# def __init__(self, params):
-#     '''
-#     Constructor
-#     '''
-#     super().__init__()
+    def __init__(self, *args, **kwargs):
+        """
+        Constructor
+        """
+#         super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        self.last_connect = dateparser("now")
+
+
+pass

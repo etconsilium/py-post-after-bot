@@ -12,37 +12,26 @@ import os
 import sys
 import json
 
-from hashlib import sha1
-from dotenv import load_dotenv
-from dotenv import dotenv_values
-from loguru import logger as log
-from var_dump import var_dump
-
-
 import telebot
 from telebot import TeleBot
 from telebot import apihelper
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from db import db_hash
-
-load_dotenv(".env")
-# config = dotenv_values(".env")
 
 import db
-from db import DB
-from db import db_hash
 
-# Initialize with a Project Key
-TG_TOKEN = os.getenv("TG_TOKEN", "#_#")
-TG_MAX_CONNECTION = int(os.getenv("TG_MAX_CONNECTION", "40"))
-TG_DROP_UPDATES = bool(os.getenv("TG_DROP_UPDATES", None))
-TG_TIMEOUT = int(os.getenv("TG_TIMEOUT", "10"))
-TG_PARSE_MODE = os.getenv("TG_PARSE_MODE", None)
+# from db import id as row_id, message_id, key as row_key
+from db import hasher
+
+from models import Record
+from session import Session
+
+import settings as sets
+
 
 # bot = telebot.TeleBot(TG_TOKEN, threaded=False, parse_mode=TG_PARSE_MODE)
-bot = telebot.TeleBot(TG_TOKEN, parse_mode=TG_PARSE_MODE)
+bot = telebot.TeleBot(sets.TG_TOKEN, parse_mode=sets.TG_PARSE_MODE)
 
 # abot = telebot.AsyncTeleBot("TOKEN")
 # res = abot.send_message(cid, f"text")
@@ -56,13 +45,19 @@ bot = telebot.TeleBot(TG_TOKEN, parse_mode=TG_PARSE_MODE)
 @bot.message_handler(commands=["start"])
 def start_command(message: types.Update):
 
-    key = db_hash(message)
-    session = DB.get(key)
+    key = db.key(message)
+    print(key)
+    session = Session.one(key)
+    session.command = message.text
+    print(session)
+
+    echo_message(message, "%s -=-=-=-=- %s" % (session.command, str(session)))
 
     t = message.entities[0]
     if len(message.text) > t.length:
         BEEP_STATUS = 1
-        write_message_1(message)
+        #         send_start_plus_key(message)
+        echo_message(message, "send_start_plus_key")
     else:
         # bot.send_message(message.chat.id, 'start text')
         welcome_message(message)
@@ -79,7 +74,7 @@ def beep_command(message: types.Update):
 
 @bot.message_handler(commands=["check"])
 def check_command(message: types.Update):
-    DB.get(key)
+    Record.one(db.message_id(message))
 
     echo_message(message)
     return
@@ -87,23 +82,21 @@ def check_command(message: types.Update):
 
 @bot.message_handler(commands=["beep"])
 def start_beep(message: types.Update):
-    global BEEP_STATUS, DB
+    global BEEP_STATUS
 
     beep = "Beep"
     t = message.entities[0]
     abonent_box = (message.text[t.offset + t.length :]).strip()
     href = "<a href='https://t.me/post_after_bot?start={abonent_box}'><b>{abonent_box.upper()}</b></a>"
 
-    var_dump(message.text, abonent_box)
-    var_dump(bool(abonent_box))
-    var_dump(len(message.text) > t.length and bool(abonent_box))
-
-    return
+    print(message.text, abonent_box)
+    print(bool(abonent_box))
+    print(len(message.text) > t.length and bool(abonent_box))
 
     if len(message.text) > t.length and bool(abonent_box):
         # :mailing: FetchResponse
-        mailing = DB.fetch({"abonent_box?eq": abonent_box})
-        var_dump("mailing", mailing)
+        mailing = Record.find({"abonent_box?eq": abonent_box})
+        print("mailing", mailing)
         BEEP_STATUS = 2 if 1 == BEEP_STATUS else 1
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
@@ -172,13 +165,13 @@ def source_command(message: types.Update):
 
 
 @bot.message_handler(content_types=["text"])
-def echo_message(message: types.Update):
+def echo_message(message: types.Update, text: str = None):
     # bot.reply_to(message, message.text)
-    bot.send_message(message.chat.id, message.text)
+    bot.send_message(message.chat.id, message.text if text is None else text)
     return
 
 
-def write_message_1(message: types.Update):
+def send_start_plus_key(message: types.Update):
     beep = "Beep"
     t = message.entities[0]
     abonent_box = (message.text[t.offset + t.length :]).strip()

@@ -1,21 +1,27 @@
+# -*- coding: utf-8 -*-
 ##
 ##
 #
 #
+
 """# Do NOT attempt duplicate the hacks used here without consulting your pythia first"""
+
 
 import json
 import warnings
+from copy import copy, deepcopy
 from zlib import adler32
 from datetime import datetime
 
 # from datetime import datetime, date, time, timedelta, timezone
 
-from dateparser import parse as dparser
+from db import dateparser
+from db import DB, id as row_id, key
 
-from db import DB, id as row_id
+from settings import log
 
-# from pprint import pprint, pp
+from var_dump import var_dump
+from pprint import pprint as pp
 
 
 class BasicModel(object):
@@ -26,10 +32,10 @@ class BasicModel(object):
     # W0212: Access to a protected member __driver of a client class (protected-access)
     # W0238: Unused private member `BasicModel.__driver` (unused-private-member)
     __driver = DB
-    __tablename = None
 
     # protected / public
     _save_on_exit = True
+    _tablename = None
     _driver = None
     _tablename = None
     _id = None
@@ -44,9 +50,8 @@ class BasicModel(object):
         # Unused arguments (unused-argument)
 
         if __class__.__name__ != cls.__name__:
-            cls._tablename = (
-                cls.__name__ if cls.__tablename is None else cls.__tablename
-            )
+            if cls._tablename is None:
+                cls._tablename = cls.__name__
             cls._driver = __class__.__driver(cls._tablename)
         # TypeError: object.__new__() takes exactly one argument (the type to instantiate)
         return object.__new__(cls)
@@ -64,35 +69,35 @@ class BasicModel(object):
         Model()
         """
 
-        self._id = id(self)
-
         if len(args) > 0 and isinstance(args[0], dict):
             self.__dict__.update(args[0])
             if len(args) > 1:
                 self.key = str(args[1])
+        else:
+            if len(args) == 1:
+                self.key = str(args[0])
 
         self.__dict__.update(kwargs)
-
-        if not self.key:
-            self.key = str(row_id())
-
+        # string only
+        self.key = str(row_id() if not self.key else self.key)
+        self._id = id(self)
         self._hash = hash(self)
 
         # return self    # __init__
 
-    def __hash__(self) -> int:
-        """the fastest. probably"""
-        return adler32(bytes(str(self.__dict__), "utf8")) & 0xFFFFFFFF  # see py guide
-
     def __dir__(self) -> dict:
         """dir() вернёт список легитимных атрибутов, а для избранных __dir__() -- словарь данных"""
         return dict(
-            [
-                # лень кастомизировать типы
-                (k, (str(v) if not isinstance(v, (int, float, bool, str)) else v))
-                for k, v in self.__dict__.items()
-                if not k.startswith("_")
-            ]
+            (
+                k,
+                (
+                    str(v)  # лень кастомизировать типы
+                    if not isinstance(v, (int, float, bool, str, type(None)))
+                    else v
+                ),
+            )
+            for k, v in self.__dict__.items()
+            if not k.startswith("_")
         )
 
     def __repr__(self, **kwargs) -> str:
@@ -100,15 +105,15 @@ class BasicModel(object):
             self.__dir__(), **dict({"sort_keys": (True), "indent": 2}, **kwargs)
         )
 
-    def __del__(self) -> None:
-        """Destructor"""
-
-        if self.__class__._save_on_exit and hash(self) != self._hash:
-            self._driver.put(self.__dir__(), key=self.key)
-
-        return
+    def __hash__(self) -> int:
+        """the fastest. probably"""
+        return adler32(bytes(str(self.__dict__), "utf8")) & 0xFFFFFFFF  # see py guide
 
     def __setattr__(self, name, value):
+        """принципиальной необходимости нет
+        введено для удобной обработки отсутствующих свойств
+        AttributeError: 'Class' object has no attribute 'name'
+        пс: и для удаления через присвоение None"""
 
         if value is None:
             self.__delattr__(name)
@@ -118,7 +123,7 @@ class BasicModel(object):
         return
 
     def __getattr__(self, name):
-        """oldschool style
+        """пара к __setattr__
 
         new school:
         def __getattribute__(self, item)
@@ -136,6 +141,19 @@ class BasicModel(object):
             del self.__dict__[name]
         except KeyError:
             pass
+
+    def __del__(self) -> None:
+        """Finalizer"""
+
+        if self.__class__._save_on_exit and hash(self) != self._hash:
+            try:
+                self._driver.put(self.__dir__(), key=self.key)
+            except Exception as exc:
+                log.warning(
+                    "деструктор не отработал корректно, информация не сохранена. // "
+                    + str(exc)
+                )
+                pass
 
     ##
     ##
@@ -176,6 +194,9 @@ class BasicModel(object):
                 if r is not None:
                     self.__dict__ = r
 
+        else:
+            self._driver.put(self.__dir__(), key=self.key)
+
         return self
 
     @classmethod
@@ -212,7 +233,30 @@ class Record(BasicModel):
 
     # _save_on_exit = False
 
-    id = None
+    _created = "now"
+    _expires = "in 3 days"
+
+    limits = {"quantity": 1, "keys": 3}
+
+    def __init__(self, *args, **kwargs):
+        """Constructor"""
+        super().__init__(*args, **kwargs)
+
+        # print("Record init", message)
+        # pp(self.__dict__)
+        # pp(self._hash)
+        # pp(self.__class__._hash)
+        # self.id = self.__id
+        self._id = id(self)
+        self.created = datetime.now() if not self.created else self.created
+        self.expires = dateparser(self._expires)
+
+        print("record------", self)
+        print("record------", self.__dict__)
+        print("record------", self.__dir__())
+
+
+class Message(Record):
     key = None
 
     sender = None
@@ -223,20 +267,15 @@ class Record(BasicModel):
     keyword = None
     content = "None"
 
-    _created = "now"
-    _expires = "in 3 days"
+    def __init__(self, message=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    limits = {"quantity": 1, "keys": 3}
+        self.sender = None
+        self.from_id = None
+        self.addressee = None
+        self.to_id = None
 
-    def __init__(self, message=None):
-        """Constructor"""
-        super().__init__(message)
+        self.keyword = None
+        self.content = "None"
 
-        # print("Record init", message)
-        # pp(self.__dict__)
-        # pp(self._hash)
-        # pp(self.__class__._hash)
-        # self.id = self.__id
-        self._id = id(self)
-        self.created = datetime.now()
-        self.expires = dparser(self._expires)
+    pass

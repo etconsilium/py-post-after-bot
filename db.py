@@ -4,57 +4,61 @@
 #
 """databases &C"""
 
-import os
-import json
-
-from hashlib import sha1
-from dotenv import load_dotenv
-from dotenv import dotenv_values
-from loguru import logger as log
-from var_dump import var_dump
-
+from uuid import uuid4, uuid1, uuid3, uuid5
 from telebot import types
-
-load_dotenv(".env")
-config = dotenv_values(".env")
-
 from deta import Deta
 
-deta = Deta(os.getenv("DETA_PROJECT_KEY"))
-DETA_DB_NAME = os.getenv("DETA_DB_NAME", "#_#")
-DB = deta.Base(DETA_DB_NAME)
-SESSION_DB = deta.Base("SESSION")  #    PYSESSID
+from settings import sha
+from settings import DETA_PROJECT_KEY, DETA_DB_NAME
+
+from dateparser import parse as dateparser
+
+deta = Deta(DETA_PROJECT_KEY)
+DB = deta.Base
+# ACTION_DB = DB(DETA_DB_NAME)
+# SESSION_DB = DB("SESSION")  #    PYSESSID
 
 
-def db_id(message: types.Update):
-    return (
-        #         "{}:{}".format(message["from"]["id"], message["chat"]["id"]).encode("utf8")
-        "{}:{}".format(message.from_user.id, message.chat.id)
-    )
+def id():
+    return str(uuid4())
 
 
-def db_key(series=None, *args):
-    s = ''
+# def message_id(message: types.Update):
+def message_id(message):
+    return "{}:{}".format(message.from_user.id, message.chat.id)
+
+
+# in python3 arg's order be like:
+def key(*args, series=None, **kwargs):
+
+    s = ""
     if isinstance(series, types.Update):
-        s = db_id(series)
-    if type(series) in (list,tuple):
-        s = str(sorted(series))
-    if type(series) is dict:
-        s = str(dict(sorted(series.items())))
-    if type(series) is not str:
+        s = message_id(series)
+    if isinstance(series, (list, tuple, set)):
+        # s = sorted(set(args+list(series)))
+        s = sorted(series)
+    if isinstance(series, (dict)):
+        s = dict(sorted(series.items()))
+
+    if not len(s):
         # if s is None:
-        raise Exception("\db/")
-        
-    if (len(kwargs)):
-        s="{}:{}".format(s, join(':', [for a in args]))
+        #         raise Exception("\db/ key")
+        s = str(series)
+
+    s = "{}:{}".format(s, hasher(*args, **kwargs))
+
+    #     if len(args):
+    #         s = "{}:{}".format(s, ":".join([a for a in args]))
+
+    #     pp(args, kwargs)
+    #     print("key", s)
     return s
 
 
-def db_hash(**kwargs):
-    var_dump(kwargs)
-    return sha1(s.encode("utf8")).hexdigest()
+def hasher(*args, **kwargs):
+    return sha(str(list(args) + sorted(kwargs.items())).encode("utf8")).hexdigest()
 
 
-# SESSION_KEY = db_hash()
+# SESSION_KEY = db_hasher()
 # Session = SESSION_DB.get(SESSION_KEY)
 # var_dump(Session)
