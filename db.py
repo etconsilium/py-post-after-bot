@@ -1,4 +1,4 @@
-#####
+####
 ##
 #
 #
@@ -41,17 +41,10 @@ def key(*args, series=None, **kwargs):
         s = dict(sorted(series.items()))
 
     if not len(s):
-        # if s is None:
-        #         raise Exception("\db/ key")
-        s = str(series)
+        s = "{}:{}".format(s, hasher(*args, **kwargs))
+    else:
+        s = "{}:{}".format(str(series), id()) if series else id()
 
-    s = "{}:{}".format(s, hasher(*args, **kwargs))
-
-    #     if len(args):
-    #         s = "{}:{}".format(s, ":".join([a for a in args]))
-
-    #     pp(args, kwargs)
-    #     print("key", s)
     return s
 
 

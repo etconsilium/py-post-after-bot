@@ -6,7 +6,7 @@
 """
 телеграмный бот
  * автоответчик: сохраняет и показывает сообщения
- * анонимизатор: в процессе разработки идея отошла на второй план
+ * анонимизатор: первоначальная идея
 
 код иллюстрирует, как не надо писать код
 также содержит примеры вариантов реализации (в комментариях)
@@ -31,6 +31,7 @@ from settings import sha
 from settings import TG_TOKEN, TG_TIMEOUT, TG_MAX_CONNECTION, TG_MODE
 
 from commands import bot
+import commands
 
 from fastapi import FastAPI
 from fastapi import Body
@@ -72,7 +73,7 @@ def wh_path():
     )
 
 
-@app.on_event("startup")
+@app.on_event("startup")  # не на всех версиях работает
 def set_webhook():
 
     global FILE_TOKEN, WEBHOOK_DOMAIN, WH_URL
@@ -124,9 +125,10 @@ WH_URL = wh_url()
 # Begin
 #
 
+# set_webhook()
 
 # pylint: disable=unused-argument
-@app.post(WH_PATH, response_class=Response, status_code=200)
+@app.post(WH_PATH, response_class=JSONResponse, status_code=200)
 async def webhook(
     request: Request,
     response: Response,
@@ -140,14 +142,16 @@ async def webhook(
     # payload = json.loads( await request.body() )
     # message = payload['message']
 
-    # var_dump('update_id' in payload)
     if "update_id" in payload:
         #   copypaste from bot.get_updates()
         data = [types.Update.de_json(ju) for ju in [payload]]
         # data - Object of type Update is not JSON serializable
         var_dump("bot.process_new_updates")
-        #         var_dump(data)
+        var_dump(TG_MAX_CONNECTION)
+        # var_dump(data)
+
         bot.process_new_updates(data)
+        response.status_code = 200
 
     else:
         if "cron" in payload:
@@ -161,7 +165,7 @@ async def webhook(
     #     content={"detail": jsonable_encoder(payload)},
     # )
 
-    return
+    return {"ok": True}
 
 
 @app.get("/", response_class=HTMLResponse, status_code=403)

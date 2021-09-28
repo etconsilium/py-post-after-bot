@@ -1,4 +1,4 @@
-##
+####
 ##
 #
 #
@@ -7,19 +7,17 @@
 
 import json
 import warnings
-from copy import copy, deepcopy
 from zlib import adler32
 from datetime import datetime
 
 # from datetime import datetime, date, time, timedelta, timezone
+from pprint import pprint as pp
+from var_dump import var_dump
 
 from db import dateparser
-from db import DB, id as row_id, key
+from db import DB, id as row_id
 
 from settings import log
-
-from var_dump import var_dump
-from pprint import pprint as pp
 
 
 class BasicModel(object):
@@ -133,6 +131,7 @@ class BasicModel(object):
         except KeyError:
             # lika dict.pop(name, None) but twice as quick
             pass
+        return None  #!important
 
     def __delattr__(self, name):
         try:
@@ -140,18 +139,19 @@ class BasicModel(object):
         except KeyError:
             pass
 
-    def __del__(self) -> None:
+    def __del__(self):
         """Finalizer"""
 
         if self.__class__._save_on_exit and hash(self) != self._hash:
             try:
+                # self.update()
                 self._driver.put(self.__dir__(), key=self.key)
             except Exception as exc:
                 log.warning(
                     "деструктор не отработал корректно, информация не сохранена. // "
                     + str(exc)
                 )
-                pass
+        pass
 
     ##
     ##
@@ -225,6 +225,8 @@ class BasicModel(object):
         o.__init__(r)
         return o
 
+    pass  # BasicModel
+
 
 class Record(BasicModel):
     """Damn answering machine tapes!"""
@@ -239,18 +241,11 @@ class Record(BasicModel):
         """Constructor"""
         super().__init__(*args, **kwargs)
 
-        # print("Record init", message)
-        # pp(self.__dict__)
-        # pp(self._hash)
-        # pp(self.__class__._hash)
-        # self.id = self.__id
         self._id = id(self)
         self.created = datetime.now() if not self.created else self.created
         self.expires = dateparser(self._expires)
 
-        print("record------", self)
-        print("record------", self.__dict__)
-        print("record------", self.__dir__())
+    pass  # Record
 
 
 class Message(Record):
@@ -275,4 +270,4 @@ class Message(Record):
         self.keyword = None
         self.content = "None"
 
-    pass
+    pass  # Message

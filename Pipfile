@@ -9,7 +9,6 @@ uvicorn = "*"
 autoversion = "*"
 stop-words = "*"
 pylint = "*"
-session-client = "*"
 
 [packages]
 fastapi = "*"
@@ -17,9 +16,9 @@ fastapi = "*"
 pytelegrambotapi = "*"
 # from dotenv import load_dotenv
 python-dotenv = "*"
+dateparser = "*"
 loguru = "*"
 deta = "*"
-dateparser = "*"
 
 [requires]
 python_version = "3.8"
