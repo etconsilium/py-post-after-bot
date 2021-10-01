@@ -11,6 +11,7 @@ import os
 import sys
 import json
 from os import environ
+from os import linesep as CRLF
 
 # import time
 # import requests

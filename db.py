@@ -19,6 +19,10 @@ DB = deta.Base
 # SESSION_DB = DB("SESSION")  #    PYSESSID
 
 
+def strdateparser(*args, **kwargs):
+    return str(dateparser(*args, **kwargs))
+
+
 def id():
     return str(uuid4())
 
