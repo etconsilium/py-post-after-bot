@@ -101,7 +101,8 @@ def set_webhook():
                 # ip_address=None,
                 # drop_pending_updates=TG_DROP_UPDATES,
                 drop_pending_updates=True,
-                timeout=TG_TIMEOUT,
+                # so it should wait as long as the maximum script execution time
+                # timeout=TG_TIMEOUT,
             )
         else:
             bot.polling(none_stop=True, timeout=TG_TIMEOUT)
