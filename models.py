@@ -2,7 +2,7 @@
 ##
 #
 #
-"""# Do NOT attempt duplicate the hacks used here without consulting your pythia first"""
+""" # Do NOT attempt duplicate the hacks used here without consulting your pythia first """
 
 
 import json
@@ -14,7 +14,7 @@ from datetime import datetime
 from pprint import pprint as pp
 from var_dump import var_dump
 
-from db import dateparser
+from db import dateparser, strdateparser
 from db import DB, id as row_id
 
 from settings import log
@@ -74,15 +74,23 @@ class BasicModel(object):
                 self.key = str(args[0])
 
         self.__dict__.update(kwargs)
-        # string only
-        self.key = str(row_id() if not self.key else self.key)
+
+        self.key = str(row_id() if not self.key else self.key)  # string only
+
+        # !discussion
+        # r = self._driver.get(self.key)  # try data raise
+        # if isinstance(r, dict) and len(r):
+        # self.__dict__ = dict(r, **self.__dict__)
+        # наоборот, надо дополнять значения инициализации значениями из базы
+        #     self.__dict__.update(r)
+
         self._id = id(self)
         self._hash = hash(self)
 
         # return self    # __init__
 
     def __dir__(self) -> dict:
-        """dir() вернёт список легитимных атрибутов, а __dir__() -- словарь данных для избранных"""
+        """dir() вернёт список легитимных атрибутов, а для избранных __dir__() вернет словарь данных"""
         return dict(
             (
                 k,
@@ -102,14 +110,16 @@ class BasicModel(object):
         )
 
     def __hash__(self) -> int:
-        """the fastest. probably"""
-        return adler32(bytes(str(self.__dict__), "utf8")) & 0xFFFFFFFF  # see py guide
+        """the faster than fast. probably"""
+        # return adler32(bytes(str(self.__dict__), "utf8")) & 0xFFFFFFFF  # see py guide
+        return adler32(bytes(str(self.__dir__()), "utf8")) & 0xFFFFFFFF  # see py guide
 
     def __setattr__(self, name, value):
         """принципиальной необходимости нет
         введено для удобной обработки отсутствующих свойств
         AttributeError: 'Class' object has no attribute 'name'
-        пс: и для удаления через присвоение None"""
+        """
+        # пс: и для удаления через присвоение None ;)
 
         if value is None:
             self.__delattr__(name)
@@ -162,21 +172,29 @@ class BasicModel(object):
 
     @classmethod
     def find(cls, criteria=None, limit=1000, last_key=None):
-        r = cls._driver.fetch(query=criteria, limit=limit, last=last_key)
+        print(cls, cls.__name__, cls(), cls._driver)
+        r = cls()._driver.fetch(query=criteria, limit=limit, last=last_key)
+        print(r, r.items)
         # @TODO
-        return r
+        # if r.count>0:
+        return {
+            "count": r.count,
+            "last_key": r.last,
+            "result": [cls(d) for d in r.items],
+        }
 
     def insert(self):
         """Needs implementation
         now it work as db.put()
         """
-        warnings.warn("Needs implementation", UserWarning)
-        self._driver.put(repr(self), key=self.key)  # !important key=
+        print(self)
+        self._driver.put(self.__dir__(), key=self.key)  # !important key=
         return self
 
     def update(self, data: dict = None, criteria=None):
         """Needs implementation"""
 
+        warnings.warn("Needs implementation", UserWarning)
         if data is not None:
             # pylint: disable=E0203
             # Access to member '__dict__' before its definition (access-member-before-definition)
@@ -193,7 +211,7 @@ class BasicModel(object):
                     self.__dict__ = r
 
         else:
-            self._driver.put(self.__dir__(), key=self.key)
+            self.insert()
 
         return self
 
