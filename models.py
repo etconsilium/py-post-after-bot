@@ -11,11 +11,11 @@ from zlib import adler32
 from datetime import datetime
 
 # from datetime import datetime, date, time, timedelta, timezone
-from pprint import pprint as pp
-from var_dump import var_dump
+# from pprint import pprint as pp
+# from var_dump import var_dump
 
 from db import dateparser, strdateparser
-from db import DB, id as row_id
+from db import DB, id as row_id, message_id
 
 from settings import log
 
@@ -260,8 +260,11 @@ class Record(BasicModel):
         super().__init__(*args, **kwargs)
 
         self._id = id(self)
-        self.created = datetime.now() if not self.created else self.created
+        self.created = dateparser(self._created) if not self.created else self.created
         self.expires = dateparser(self._expires)
+
+    def id(self):
+        return row_id()
 
     pass  # Record
 
@@ -280,12 +283,15 @@ class Message(Record):
     def __init__(self, message=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.sender = None
-        self.from_id = None
-        self.addressee = None
-        self.to_id = None
+        if message is not None:
+            self.id = message_id(message)
+            self.sender = message.from_user.name
+            self.from_id = message.from_user.id
+            self.addressee = None
+            self.to_id = None
+            self.value = message
 
         self.keyword = None
-        self.content = "None"
+        self.content = ""
 
     pass  # Message
