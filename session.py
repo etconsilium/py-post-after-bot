@@ -20,7 +20,13 @@ class Session(Record):
         """
         super().__init__(*args, **kwargs)
         self.id = str(
-            kwargs['id'] if 'id' in kwargs else (args[0] if len(args) else db_id())
+            kwargs['id']
+            if 'id' in kwargs
+            else (
+                args[0]
+                if len(args) and not isinstance(args, (list, tuple, set, dict))
+                else db_id()
+            )
         )
         self.last_connect = dateparser("now")
 
