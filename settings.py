@@ -31,11 +31,11 @@ load_dotenv()
 
 # Initialize with a Project Key
 TG_TOKEN = environ.get("TG_TOKEN", "#_#")
+TG_MODE = environ.get("TG_MODE", "webhook")
 TG_MAX_CONNECTION = int(environ.get("TG_MAX_CONNECTION", "40"))
 TG_DROP_UPDATES = bool(environ.get("TG_DROP_UPDATES", None))
-TG_TIMEOUT = int(environ.get("TG_TIMEOUT", "10"))
-TG_MODE = environ.get("TG_MODE", "webhook")
 TG_PARSE_MODE = environ.get("TG_PARSE_MODE", None)
+TG_TIMEOUT = int(environ.get("TG_TIMEOUT", "10"))
 
 
 DETA_PROJECT_KEY = environ.get("DETA_PROJECT_KEY", None)

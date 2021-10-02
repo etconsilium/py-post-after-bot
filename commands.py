@@ -82,6 +82,37 @@ def beep_markup_menu(message):
     return markup
 
 
+def check_status(message):
+    return True
+
+
+def echo_message(message: types.Update, text: str = None):
+    # bot.reply_to(message, message.text)
+    bot.send_message(message.chat.id, message.text if text is None else text)
+
+
+def echo_start_with_key(message):
+    href = abonent_href(abonent_box(message))
+    markup = beep_markup_menu(message)
+    text = (
+        f"Hi there, You have reached the postponement machine with a combination"
+        + f" {href}. Post message and press /{BBB} button, message send after {BBB}!"
+        + os.linesep * 2
+        + f"Отправьте сообщение для абонента {href} и нажмите кнопку {BBB}."
+        + " Ваше сообщение будет отослано после подтверждения"
+    )
+    bot.send_message(message.chat.id, text, reply_markup=markup)
+
+
+# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
+# @bot.message_handler(func=lambda message: True)
+# def welcome_message(message: types.Update):
+def welcome_message(message):
+    # bot.reply_to(message, message.text)
+    # bot.send_message(message.chat.id, message.text)
+    bot.send_message(message.chat.id, "> к работе готов <")
+
+
 @bot.message_handler(commands=["start"])
 def start_command(message=None):
 
@@ -93,11 +124,13 @@ def start_command(message=None):
     session = Session.one(message_id(message))
     session.last_command = message.text
     session.abonent = ab
+    session.step = "READY_TO_RECORD"
     session.insert()
 
     # m = Message()
     r = Message.find(
-        {"abonent": ab, "expires?gte": dateparser("now").strftime("%Y-%m-%d")}
+        # {"abonent": ab, "expires?gte": dateparser("now").strftime("%Y-%m-%d")}
+        {"abonent": ab, "expires?gte": strdateparser("now")}
     )
     print(r)
     echo_message(message, "%s -=-=-=-=- %s" % (session.command, str(r)))
@@ -128,54 +161,7 @@ def beep_command(message):
 
 @bot.message_handler(commands=["check"])
 def check_command(message):
-    Record.one(db.message_id(message))
-
     echo_message(message)
-
-
-# @bot.message_handler(commands=["beep"])
-def start_beep(message):
-    global BEEP_STATUS
-
-    beep = "Beep"
-    t = message.entities[0]
-    abonent_box = (message.text[t.offset + t.length :]).strip()
-    href = "<a href='https://t.me/post_after_bot?start={abonent_box}'><b>{abonent_box.upper()}</b></a>"
-
-    print(message.text, abonent_box)
-    print(bool(abonent_box))
-    print(len(message.text) > t.length and bool(abonent_box))
-
-    if len(message.text) > t.length and bool(abonent_box):
-        # :mailing: FetchResponse
-        mailing = Record.find({"abonent_box?eq": abonent_box})
-        print("mailing", mailing)
-        BEEP_STATUS = 2 if 1 == BEEP_STATUS else 1
-
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
-    buttonB = types.KeyboardButton(f"/{beep}!")
-    markup.row(buttonB)
-
-    # InlineKeyboardButton(text, url=None, callback_data=None, switch_inline_query=None, switch_inline_query_current_chat=None, callback_game=None, pay=None, login_url=None, **_kwargs)
-    # markup = types.InlineKeyboardMarkup()
-    # buttonB = types.InlineKeyboardButton('Beep!')
-    # markup.row(buttonB)
-
-    # user_id = message.from.id
-    chat_id = message.chat.id
-
-    """
-    allowed html tags
-    <b>bold</b>, <strong>bold</strong> <i>italic</i>, <em>italic</em> <a href="URL">inline URL</a>
-    <code>inline fixed-width code</code> <pre>pre-formatted fixed-width code block</pre>
-    """
-    text = (
-        f"Hi there, You have reached the postponement machine with a combination"
-        + f" {href}. Post a message after the {beep}!"
-        + os.linesep * 2
-        + f"Нажмите кнопку и напишите сообщение на абонентский ящик {href}"
-    )
-    bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
 @bot.message_handler(commands=["help"])
@@ -221,28 +207,46 @@ def text_handler(message: types.Update):
     # session.update()
 
 
-def echo_message(message: types.Update, text: str = None):
-    # bot.reply_to(message, message.text)
-    bot.send_message(message.chat.id, message.text if text is None else text)
+# @bot.message_handler(commands=["beep"])
+def DELME_start_beep(message):
+    global BEEP_STATUS
 
+    beep = "Beep"
+    t = message.entities[0]
+    abonent_box = (message.text[t.offset + t.length :]).strip()
+    href = "<a href='https://t.me/post_after_bot?start={abonent_box}'><b>{abonent_box.upper()}</b></a>"
 
-def echo_start_with_key(message):
-    href = abonent_href(abonent_box(message))
-    markup = beep_markup_menu(message)
+    print(message.text, abonent_box)
+    print(bool(abonent_box))
+    print(len(message.text) > t.length and bool(abonent_box))
+
+    if len(message.text) > t.length and bool(abonent_box):
+        # :mailing: FetchResponse
+        mailing = Record.find({"abonent_box?eq": abonent_box})
+        print("mailing", mailing)
+        BEEP_STATUS = 2 if 1 == BEEP_STATUS else 1
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    buttonB = types.KeyboardButton(f"/{beep}!")
+    markup.row(buttonB)
+
+    # InlineKeyboardButton(text, url=None, callback_data=None, switch_inline_query=None, switch_inline_query_current_chat=None, callback_game=None, pay=None, login_url=None, **_kwargs)
+    # markup = types.InlineKeyboardMarkup()
+    # buttonB = types.InlineKeyboardButton('Beep!')
+    # markup.row(buttonB)
+
+    # user_id = message.from.id
+    chat_id = message.chat.id
+
+    """
+    allowed html tags
+    <b>bold</b>, <strong>bold</strong> <i>italic</i>, <em>italic</em> <a href="URL">inline URL</a>
+    <code>inline fixed-width code</code> <pre>pre-formatted fixed-width code block</pre>
+    """
     text = (
         f"Hi there, You have reached the postponement machine with a combination"
-        + f" {href}. Post message and press /{BBB} button, message send after {BBB}!"
+        + f" {href}. Post a message after the {beep}!"
         + os.linesep * 2
-        + f"Отправьте сообщение для абонента {href} и нажмите кнопку {BBB}."
-        + " Ваше сообщение будет отослано после подтверждения"
+        + f"Нажмите кнопку и напишите сообщение на абонентский ящик {href}"
     )
     bot.send_message(message.chat.id, text, reply_markup=markup)
-
-
-# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
-# @bot.message_handler(func=lambda message: True)
-# def welcome_message(message: types.Update):
-def welcome_message(message):
-    # bot.reply_to(message, message.text)
-    # bot.send_message(message.chat.id, message.text)
-    bot.send_message(message.chat.id, "> к работе готов <")

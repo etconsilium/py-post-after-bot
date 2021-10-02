@@ -28,7 +28,14 @@ from var_dump import var_dump
 
 import settings as sets
 from settings import sha
-from settings import TG_TOKEN, TG_TIMEOUT, TG_MAX_CONNECTION, TG_MODE
+from settings import (
+    TG_TOKEN,
+    TG_MODE,
+    TG_MAX_CONNECTION,
+    TG_DROP_UPDATES,
+    TG_PARSE_MODE,
+    TG_TIMEOUT,
+)
 
 from commands import bot
 import commands
@@ -104,12 +111,17 @@ def set_webhook():
                 # allowed_updates=ALLOWED_UPDATES,
                 # ip_address=None,
                 # drop_pending_updates=TG_DROP_UPDATES,
-                drop_pending_updates=True,
+                drop_pending_updates=TG_DROP_UPDATES,
                 # so it should wait as long as the maximum script execution time
                 # timeout=TG_TIMEOUT,
             )
         else:
-            bot.polling(none_stop=True, timeout=TG_TIMEOUT)
+            bot.polling(
+                none_stop=True,
+                max_connections=TG_MAX_CONNECTION,
+                drop_pending_updates=TG_DROP_UPDATES,
+                timeout=TG_TIMEOUT,
+            )
             # bot = telebot.TeleBot(TG_TOKEN, threaded=False, parse_mode=TG_PARSE_MODE)
 
     log.debug(bot.get_webhook_info())
