@@ -2,7 +2,7 @@
 ##
 #
 #
-from db import strdateparser
+from db import dateparser, strdateparser, id as db_id
 from models import BasicModel, Record
 
 # class Session(BasicModel):
@@ -18,10 +18,14 @@ class Session(Record):
         """
         Constructor
         """
-        #         super().__init__(*args, **kwargs)
         super().__init__(*args, **kwargs)
-
-        self.last_connect = strdateparser("now")
+        self.id = str(
+            kwargs['id'] if 'id' in kwargs else (args[0] if len(args) else db_id())
+        )
+        self.last_connect = dateparser("now")
 
 
 pass
+
+
+SESSION = Session()
