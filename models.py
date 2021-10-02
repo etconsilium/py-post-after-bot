@@ -172,22 +172,17 @@ class BasicModel(object):
 
     @classmethod
     def find(cls, criteria=None, limit=1000, last_key=None):
-        print(cls, cls.__name__, cls(), cls._driver)
+        # print(cls, cls.__name__, cls(), cls._driver)
         r = cls()._driver.fetch(query=criteria, limit=limit, last=last_key)
-        print(r, r.items)
+        # print(r, r.items)
         # @TODO
         # if r.count>0:
-        return {
-            "count": r.count,
-            "last_key": r.last,
-            "result": [cls(d) for d in r.items],
-        }
+        return {"count": r.count, "last_key": r.last, "data": [cls(d) for d in r.items]}
 
     def insert(self):
         """Needs implementation
         now it work as db.put()
         """
-        print(self)
         self._driver.put(self.__dir__(), key=self.key)  # !important key=
         return self
 
@@ -270,15 +265,12 @@ class Record(BasicModel):
 
 
 class Message(Record):
-    key = None
-
-    sender = None
-    from_id = None
-    addressee = None
-    to_id = None
 
     keyword = None
     content = "None"
+
+    _created = "now"
+    _expires = "in 1 hour"
 
     def __init__(self, message=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
