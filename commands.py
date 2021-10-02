@@ -23,8 +23,9 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 import db
 from db import id as row_id, message_id, key as row_key
 from db import hasher
+from db import dateparser, strdateparser
 
-from models import Record
+from models import Record, Message
 from session import Session
 
 import settings as sets
@@ -47,11 +48,11 @@ BBB = "Beep"
 HELP_TEXT = """\
 /beep - [код] : записать приветственное сообщение
 /start - [код] : отправить сообщение абоненту 
-/beep - beep (два раза) : прочитать сообщения
 /check - проверить сообщения (как два бип)
 /source - sourcecode
 /help - список команд
 """
+# /beep - beep (два раза) : прочитать свои сообщения
 
 
 def abonent_href(abonent_box: str):
@@ -82,23 +83,38 @@ def beep_markup_menu(message):
 
 
 @bot.message_handler(commands=["start"])
-def start_command(message: types.Update):
+def start_command(message=None):
 
-    key = db.key(message)
+    # key = db.key(message)
     key = message_id(message)
     print(key)
     ab = abonent_box(message)
 
-    session = Session.one(key)
+    session = Session.one(message_id(message))
     session.last_command = message.text
     session.abonent = ab
+    session.insert()
 
-    # welcome_message(message)
+    # m = Message()
+    r = Message.find(
+        {"abonent": ab, "expires?gte": dateparser("now").strftime("%Y-%m-%d")}
+    )
+    print(r)
+    echo_message(message, "%s -=-=-=-=- %s" % (session.command, str(r)))
 
     if ab:
-        start_plus_key_command(message)
-        echo_message(message, "%s -=-=-=-=- %s" % (session.command, str(session)))
+        href = abonent_href(abonent_box(message))
+        markup = beep_markup_menu(message)
+        text = (
+            f"Hi there, You have reached the postponement machine with a combination"
+            + f" {href}. Post message and press /{BBB} button, message send after {BBB}!"
+            + os.linesep * 2
+            + f"Отправьте сообщение для абонента {href} и нажмите кнопку {BBB}."
+            + " Ваше сообщение будет отослано после подтверждения"
+        )
+        bot.send_message(message.chat.id, text, reply_markup=markup)
 
+    welcome_message(message)
     # return 200
 
 
@@ -106,19 +122,19 @@ def start_command(message: types.Update):
 
 
 @bot.message_handler(commands=["beep"])
-def beep_command(message: types.Update):
+def beep_command(message):
     echo_message(message)
 
 
 @bot.message_handler(commands=["check"])
-def check_command(message: types.Update):
+def check_command(message):
     Record.one(db.message_id(message))
 
     echo_message(message)
 
 
-@bot.message_handler(commands=["beep"])
-def start_beep(message: types.Update):
+# @bot.message_handler(commands=["beep"])
+def start_beep(message):
     global BEEP_STATUS
 
     beep = "Beep"
@@ -189,12 +205,28 @@ def source_command(message: types.Update):
 
 
 @bot.message_handler(content_types=["text"])
+def text_handler(message: types.Update):
+
+    session = Session.one(message_id(message))
+    # session.last_command = message.text
+    # session.abonent = ab
+    # session.update()
+
+    # bot.reply_to(message, message.text)
+    bot.send_message(
+        message.chat.id,
+        "text: %s \n last_command: %s \n abon: %s"
+        % (message.text, session.last_command, session.abonent),
+    )
+    # session.update()
+
+
 def echo_message(message: types.Update, text: str = None):
     # bot.reply_to(message, message.text)
     bot.send_message(message.chat.id, message.text if text is None else text)
 
 
-def echo_start_plus_key(message):
+def echo_start_with_key(message):
     href = abonent_href(abonent_box(message))
     markup = beep_markup_menu(message)
     text = (
@@ -207,14 +239,10 @@ def echo_start_plus_key(message):
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
-def start_plus_key_command(message: types.Update):
-    echo_start_plus_key(message)
-
-
 # Handle all other messages with content_type 'text' (content_types defaults to ['text'])
 # @bot.message_handler(func=lambda message: True)
 # def welcome_message(message: types.Update):
 def welcome_message(message):
     # bot.reply_to(message, message.text)
     # bot.send_message(message.chat.id, message.text)
-    bot.send_message(message.chat.id, "welcome")
+    bot.send_message(message.chat.id, "> к работе готов <")

@@ -92,6 +92,9 @@ def set_webhook():
         bot.remove_webhook()
 
         if "webhook" == TG_MODE:
+            # Marvin's Marvellous Guide to All Things Webhook
+            # https://core.telegram.org/bots/webhooks#the-short-version
+
             bot.set_webhook(
                 url=WH_URL,
                 # certificate=None,
