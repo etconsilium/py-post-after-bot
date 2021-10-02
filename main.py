@@ -94,6 +94,7 @@ def set_webhook():
         if "webhook" == TG_MODE:
             # Marvin's Marvellous Guide to All Things Webhook
             # https://core.telegram.org/bots/webhooks#the-short-version
+            # https://core.telegram.org/bots/webhooks#testing-your-bot-with-updates
 
             bot.set_webhook(
                 url=WH_URL,
