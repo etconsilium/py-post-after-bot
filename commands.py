@@ -71,9 +71,8 @@ def abonent_box(message):
 
 
 def beep_markup_menu(message):
-    ab = abonent_box(message)
-    markup = None
 
+    markup = None
     if bool(abonent_box):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
         button = types.KeyboardButton(f"/{BBB}!")
@@ -108,7 +107,6 @@ def echo_start_with_key(message):
 # @bot.message_handler(func=lambda message: True)
 # def welcome_message(message: types.Update):
 def welcome_message(message):
-    # bot.reply_to(message, message.text)
     # bot.send_message(message.chat.id, message.text)
     bot.send_message(message.chat.id, "> к работе готов <")
 
@@ -118,13 +116,13 @@ def start_command(message=None):
 
     # key = db.key(message)
     key = message_id(message)
-    print(key)
+    # print(key)
     ab = abonent_box(message)
 
     session = Session.one(message_id(message))
     session.last_command = message.text
     session.abonent = ab
-    session.step = "READY_TO_RECORD"
+    session.step = 'READY_TO_RECORD'
     session.insert()
 
     # m = Message()
@@ -132,7 +130,7 @@ def start_command(message=None):
         # {"abonent": ab, "expires?gte": dateparser("now").strftime("%Y-%m-%d")}
         {"abonent": ab, "expires?gte": strdateparser("now")}
     )
-    print(r)
+    # print(r)
     echo_message(message, "%s -=-=-=-=- %s" % (session.command, str(r)))
 
     if ab:
@@ -156,7 +154,20 @@ def start_command(message=None):
 
 @bot.message_handler(commands=["beep"])
 def beep_command(message):
+    session = Session.one(message_id(message))
+    st = session.step
     echo_message(message)
+
+    if 'REARY_TO_RECORD' == st:
+        # do
+        rec = Message()
+        rec.abonent = 1
+        rec.to_id = 1
+        rec.from_id = 1
+        pass
+
+    session.step = None
+    session.insert()
 
 
 @bot.message_handler(commands=["check"])
@@ -200,11 +211,22 @@ def text_handler(message: types.Update):
 
     # bot.reply_to(message, message.text)
     bot.send_message(
-        message.chat.id,
-        "text: %s \n last_command: %s \n abon: %s"
-        % (message.text, session.last_command, session.abonent),
+        message.chat.id, "text: %s \n session: \n%s" % (message.text, session)
     )
-    # session.update()
+
+    if 'READY_TO_RECORD' == session.step:
+        session.message = message
+        bot.reply_to(
+            message,
+            f'Подтвердите отправку. Confirm sending!{sets.CRLF}(press {BBB} button)',
+        )
+
+    session.insert()
+
+
+@bot.message_handler(func=lambda message: True)
+def default_handler(message):
+    bot.reply_to(message, message.text)
 
 
 # @bot.message_handler(commands=["beep"])
