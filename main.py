@@ -116,12 +116,7 @@ def set_webhook():
                 # timeout=TG_TIMEOUT,
             )
         else:
-            bot.polling(
-                none_stop=True,
-                max_connections=TG_MAX_CONNECTION,
-                drop_pending_updates=TG_DROP_UPDATES,
-                timeout=TG_TIMEOUT,
-            )
+            bot.polling(none_stop=True, timeout=TG_TIMEOUT)
             # bot = telebot.TeleBot(TG_TOKEN, threaded=False, parse_mode=TG_PARSE_MODE)
 
     log.debug(bot.get_webhook_info())

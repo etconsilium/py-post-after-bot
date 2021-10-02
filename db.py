@@ -29,7 +29,8 @@ def id():
 
 # def message_id(message: types.Update):
 def message_id(message):
-    return "{}:{}:{}".format(message.from_user.id, message.chat.id, message.id)
+    # return "{}:{}:{}".format(message.from_user.id, message.chat.id, message.id)
+    return "{}:{}".format(message.from_user.id, message.chat.id)
 
 
 # in python3 arg's order be like:
