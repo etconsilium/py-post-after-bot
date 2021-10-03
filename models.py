@@ -184,12 +184,13 @@ class BasicModel(object):
         now it work as db.put()
         """
         self._driver.put(self.__dir__(), key=self.key)  # !important key=
+        self._hash = hash(self)
         return self
 
     def update(self, data: dict = None, criteria=None):
         """Needs implementation"""
-
         warnings.warn("Needs implementation", UserWarning)
+
         if data is not None:
             # pylint: disable=E0203
             # Access to member '__dict__' before its definition (access-member-before-definition)
@@ -207,6 +208,8 @@ class BasicModel(object):
 
         else:
             self.insert()
+
+        self._hash = hash(self)
 
         return self
 
