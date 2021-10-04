@@ -19,6 +19,7 @@ class Session(Record):
         Constructor
         """
         super().__init__(*args, **kwargs)
+
         self.id = str(
             kwargs['id']
             if 'id' in kwargs
@@ -28,10 +29,11 @@ class Session(Record):
                 else db_id()
             )
         )
+        self.amount = 1 + int(self.amount if self.amount is not None else 0)
         self.last_connect = dateparser("now")
 
 
 pass
 
 
-SESSION = Session()
+# SESSION = Session()
