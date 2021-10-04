@@ -122,7 +122,7 @@ def start_command(message=None):
     session = Session.one(message_id(message))
     session.last_command = message.text
     session.abonent = ab
-    session.step = 'READY_TO_RECORD'
+    session.step = "READY_TO_RECORD"
     session.insert()
 
     # m = Message()
@@ -145,28 +145,72 @@ def start_command(message=None):
         )
         bot.send_message(message.chat.id, text, reply_markup=markup)
 
-    welcome_message(message)
+    # welcome_message(message)
     # return 200
 
 
-#         bot.send_message(message.chat.id, text, reply_markup=markup)
+@bot.message_handler(content_types=["text"])
+def text_handler(message: types.Update):
+
+    session = Session.one(message_id(message))
+
+    # session.last_command = message.text
+    # session.abonent = ab
+    # session.update()
+
+    if (
+        session.last_command.lower().startswith("/start")
+        and "READY_TO_RECORD" == session.step
+    ):
+        session.message = message.text
+
+        bot.reply_to(
+            message,
+            f"Подтвердите отправку кнопкой /{BBB}. Confirm sending!{sets.CRLF}(or re-post)",
+        )
+
+    # bot.reply_to(message, message.text)
+    bot.send_message(
+        message.chat.id, "text: %s \n session: \n%s" % (message.text, session.id)
+    )
+
+    session.insert()
 
 
 @bot.message_handler(commands=["beep"])
 def beep_command(message):
     session = Session.one(message_id(message))
-    st = session.step
-    echo_message(message)
 
-    if 'REARY_TO_RECORD' == st:
+    if (
+        session.last_command.lower().startswith("/start")
+        and "READY_TO_RECORD" == session.step
+    ):
         # do
         rec = Message()
         rec.abonent = 1
         rec.to_id = 1
         rec.from_id = 1
+
+        Message(
+            {
+                "abonent": session.abonent,
+                "content": session.message,
+                "from_id": message.from_user.id,
+                "to_id": None,
+            }
+        ).insert()
         pass
 
-    session.step = None
+    if session.last_command.lower().startswith(BBB) and BBB == session.step:
+        session.last_command = None
+        session.step = BBB
+
+        # & clear_all
+        pass
+    else:
+        session.last_command = message.text.lower()
+        session.step = BBB
+
     session.insert()
 
 
@@ -201,30 +245,9 @@ def source_command(message: types.Update):
             )
 
 
-@bot.message_handler(content_types=["text"])
-def text_handler(message: types.Update):
-
-    session = Session.one(message_id(message))
-    # session.last_command = message.text
-    # session.abonent = ab
-    # session.update()
-
-    # bot.reply_to(message, message.text)
-    bot.send_message(
-        message.chat.id, "text: %s \n session: \n%s" % (message.text, session)
-    )
-
-    if 'READY_TO_RECORD' == session.step:
-        session.message = message
-        bot.reply_to(
-            message,
-            f'Подтвердите отправку. Confirm sending!{sets.CRLF}(press {BBB} button)',
-        )
-
-    session.insert()
-
-
-@bot.message_handler(func=lambda message: True)
+# any message
+# @bot.message_handler(func=lambda message: True)
+# @bot.message_handler(content_types=["text"])
 def default_handler(message):
     bot.reply_to(message, message.text)
 
