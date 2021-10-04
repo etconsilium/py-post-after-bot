@@ -229,9 +229,8 @@ class BasicModel(object):
         print( Model.one(string_id) )
         """
 
-        r = (
-            cls._driver if cls._driver is not None else __class__.__driver(cls.__name__)
-        ).get(key)
+        o = cls.__new__(cls)
+        r = o._driver.get(key)
 
         if r is None:
             r = {"key": key}
@@ -241,7 +240,6 @@ class BasicModel(object):
             # smthng oblivious
             pass
 
-        o = cls.__new__(cls, r)
         o.__init__(r)
         return o
 
