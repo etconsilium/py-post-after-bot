@@ -44,7 +44,7 @@ class BasicModel(object):
     def __new__(cls, *args, **kwargs):
         # pylint: disable=W0613
         # Unused arguments (unused-argument)
-        cls.__init_driver(cls)
+        cls.__init_driver()
 
         # TypeError: object.__new__() takes exactly one argument (the type to instantiate)
         return object.__new__(cls)
@@ -86,6 +86,7 @@ class BasicModel(object):
 
         # return self    # __init__
 
+    @classmethod
     def __init_driver(cls):
         if __class__.__name__ != cls.__name__:
             if cls._tablename is None:
@@ -176,7 +177,7 @@ class BasicModel(object):
 
     @classmethod
     def find(cls, criteria=None, limit=1000, last_key=None):
-        cls.__init_driver(cls)
+        cls.__init_driver()
         r = cls._driver.fetch(query=criteria, limit=limit, last=last_key)
         # @TODO
 
@@ -196,9 +197,10 @@ class BasicModel(object):
         warnings.warn("Needs implementation", UserWarning)
 
         if data is not None:
-            # pylint: disable=E0203
-            # Access to member '__dict__' before its definition (access-member-before-definition)
+            # //pylint: disable=E0203,E1128
+            # E0203: Access to member '__dict__' before its definition (access-member-before-definition)
             # ничего не понимаю ¯\_(ツ)_/¯
+            # E1128: Assigning result of a function call, where the function returns None (assignment-from-none)
             self.__dict__.update(data)
             r = self._driver.update(updates=self.__dict__, key=self.key)
             if r is None:
