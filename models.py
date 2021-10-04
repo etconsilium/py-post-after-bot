@@ -44,11 +44,8 @@ class BasicModel(object):
     def __new__(cls, *args, **kwargs):
         # pylint: disable=W0613
         # Unused arguments (unused-argument)
+        cls.__init_driver(cls)
 
-        if __class__.__name__ != cls.__name__:
-            if cls._tablename is None:
-                cls._tablename = cls.__name__
-            cls._driver = __class__.__driver(cls._tablename)
         # TypeError: object.__new__() takes exactly one argument (the type to instantiate)
         return object.__new__(cls)
 
@@ -89,6 +86,13 @@ class BasicModel(object):
 
         # return self    # __init__
 
+    def __init_driver(cls):
+        if __class__.__name__ != cls.__name__:
+            if cls._tablename is None:
+                cls._tablename = cls.__name__
+            if cls._driver is None:
+                cls._driver = __class__.__driver(cls._tablename)
+
     def __dir__(self) -> dict:
         """dir() вернёт список легитимных атрибутов, а для избранных __dir__() вернет словарь данных"""
         return dict(
@@ -100,7 +104,7 @@ class BasicModel(object):
                     else v
                 ),
             )
-            for k, v in self.__dict__.items()
+            for k, v in sorted(self.__dict__.items())
             if not k.startswith("_")
         )
 
@@ -172,10 +176,10 @@ class BasicModel(object):
 
     @classmethod
     def find(cls, criteria=None, limit=1000, last_key=None):
-        # print(cls, cls.__name__, cls(), cls._driver)
-        r = cls()._driver.fetch(query=criteria, limit=limit, last=last_key)
-        # print(r, r.items)
+        cls.__init_driver(cls)
+        r = cls._driver.fetch(query=criteria, limit=limit, last=last_key)
         # @TODO
+
         # if r.count>0:
         return {"count": r.count, "last_key": r.last, "data": [cls(d) for d in r.items]}
 
@@ -275,8 +279,11 @@ class Message(Record):
     _created = "now"
     _expires = "in 1 hour"
 
+    # pylint: disable=W1113
+    # W1113: Keyword argument before variable positional arguments list in the definition of __init__ function (keyword-arg-before-vararg)
     def __init__(self, message=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        print(args, message, kwargs)
+        super().__init__(*args, **dict(kwargs, **{"message": message}))
 
         if message is not None:
             self.id = message_id(message)
