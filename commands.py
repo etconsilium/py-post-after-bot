@@ -29,6 +29,7 @@ from models import Record, Message
 from session import Session
 
 import settings as sets
+from settings import CRLF
 
 
 # bot = telebot.TeleBot(TG_TOKEN, threaded=False, parse_mode=TG_PARSE_MODE)
@@ -90,127 +91,102 @@ def echo_message(message: types.Update, text: str = None):
     bot.send_message(message.chat.id, message.text if text is None else text)
 
 
-def echo_start_with_key(message):
+def start_message(message):
     href = abonent_href(abonent_box(message))
     markup = beep_markup_menu(message)
     text = (
         f"Hi there, You have reached the postponement machine with a combination"
         + f" {href}. Post message and press /{BBB} button, message send after {BBB}!"
-        + os.linesep * 2
+        + CRLF * 2
         + f"Отправьте сообщение для абонента {href} и нажмите кнопку {BBB}."
         + " Ваше сообщение будет отослано после подтверждения"
     )
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
-# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
-# @bot.message_handler(func=lambda message: True)
-# def welcome_message(message: types.Update):
 def welcome_message(message):
     # bot.send_message(message.chat.id, message.text)
     bot.send_message(message.chat.id, "> к работе готов <")
 
 
 @bot.message_handler(commands=["start"])
-def start_command(message=None):
-
-    # key = db.key(message)
-    key = message_id(message)
-    # print(key)
+def start_command(message):
+    session = Session.one(message_id(message))
     ab = abonent_box(message)
 
-    session = Session.one(message_id(message))
+    # @TODO решить апдейтом
     session.last_command = message.text
     session.abonent = ab
-    session.step = "READY_TO_RECORD"
-    session.insert()
+    session.step = ""
 
-    # m = Message()
-    r = Message.find(
-        # {"abonent": ab, "expires?gte": dateparser("now").strftime("%Y-%m-%d")}
-        {"abonent": ab, "expires?gte": strdateparser("now")}
-    )
-    # print(r)
-    echo_message(message, "%s -=-=-=-=- %s" % (session.command, str(r)))
+    if bool(ab):
+        session.step = "READY_TO_RECORD"
 
-    if ab:
+        # start_message(message)
         href = abonent_href(abonent_box(message))
         markup = beep_markup_menu(message)
         text = (
             f"Hi there, You have reached the postponement machine with a combination"
             + f" {href}. Post message and press /{BBB} button, message send after {BBB}!"
-            + os.linesep * 2
+            + (CRLF * 2)
             + f"Отправьте сообщение для абонента {href} и нажмите кнопку {BBB}."
             + " Ваше сообщение будет отослано после подтверждения"
         )
         bot.send_message(message.chat.id, text, reply_markup=markup)
 
-    # welcome_message(message)
-    # return 200
+    else:
+        # welcome_message(message)
+        bot.send_message(message.chat.id, "> к работе готов <")
 
-
-@bot.message_handler(content_types=["text"])
-def text_handler(message: types.Update):
-
-    session = Session.one(message_id(message))
-
-    # session.last_command = message.text
-    # session.abonent = ab
-    # session.update()
-
-    if (
-        session.last_command.lower().startswith("/start")
-        and "READY_TO_RECORD" == session.step
-    ):
-        session.message = message.text
-
-        bot.reply_to(
-            message,
-            f"Подтвердите отправку кнопкой /{BBB}. Confirm sending!{sets.CRLF}(or re-post)",
-        )
-
-    # bot.reply_to(message, message.text)
-    bot.send_message(
-        message.chat.id, "text: %s \n session: \n%s" % (message.text, session.id)
-    )
-
+    # echo_message(message, 'start command')
     session.insert()
 
 
-@bot.message_handler(commands=["beep"])
+@bot.message_handler(commands=["beep", BBB])
 def beep_command(message):
     session = Session.one(message_id(message))
 
-    if (
-        session.last_command.lower().startswith("/start")
-        and "READY_TO_RECORD" == session.step
-    ):
-        # do
-        rec = Message()
-        rec.abonent = 1
-        rec.to_id = 1
-        rec.from_id = 1
+    # делаем иллюзию интерактивного меню
+    bot.delete_message(message.chat.id, message.id)
 
-        Message(
+    # bot.send_message(
+    #     message.chat.id,
+    #     "text: %s \n session: \n%s" % ("READY_TO_RECORD" == session.step, str(session)),
+    # )
+
+    # if (
+    #     session.last_command.lower().startswith("/start")
+    #     and "READY_TO_RECORD" == session.step
+    # ):
+    if "READY_TO_RECORD" == session.step:
+        # bot.send_message(message.chat.id, "BEEP COMMAND")
+        # do
+        # Message(
+        r = Record(
             {
                 "abonent": session.abonent,
                 "content": session.message,
                 "from_id": message.from_user.id,
                 "to_id": None,
+                "status": "MESSAGE_SENDED",
             }
         ).insert()
+        # echo_message(message, str(r))
+        echo_message(message, "Сообщение <pre>%s</pre> отправлено получателю" % (r.key))
+        session.step = ""
+        session.last_command = message.text
         pass
 
-    if session.last_command.lower().startswith(BBB) and BBB == session.step:
+    elif session.last_command.startswith(BBB) and not (session.step):
         session.last_command = None
         session.step = BBB
-
         # & clear_all
         pass
     else:
-        session.last_command = message.text.lower()
+        session.last_command = message.text
         session.step = BBB
 
+    # echo_message(message, "beep command")
     session.insert()
 
 
@@ -243,6 +219,34 @@ def source_command(message: types.Update):
                 "<pre><code>{}</code></pre>".format(r[x : x + MAX_LENGHT]),
                 parse_mode=None,
             )
+
+
+@bot.message_handler(content_types=["text"])
+def text_handler(message: types.Update):
+    if message.text.startswith(f"/{BBB}"):  #   кнопка не команда ¯\_(ツ)_/¯
+        return beep_command(message)
+
+    session = Session.one(message_id(message))
+    # bot.reply_to(message, message.text)
+    # bot.send_message(
+    #     message.chat.id,
+    #     "text: %s \n session: \n%s"
+    #     % (message.text.startswith(f"/{BBB}"), str(session)),
+    # )
+
+    if (
+        session.last_command.lower().startswith("/start")
+        and "READY_TO_RECORD" == session.step
+    ):
+        session.message = message.text
+
+        bot.reply_to(
+            message,
+            f"Подтвердите отправку кнопкой /{BBB}. Confirm sending!{CRLF}(or type new)",
+        )
+
+    echo_message(message, message.text)
+    session.insert()
 
 
 # any message

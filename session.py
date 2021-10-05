@@ -31,6 +31,7 @@ class Session(Record):
         )
         self.amount = 1 + int(self.amount if self.amount is not None else 0)
         self.last_connect = dateparser("now")
+        # session.last_command = ""
 
 
 pass

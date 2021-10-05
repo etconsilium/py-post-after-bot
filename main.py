@@ -18,11 +18,13 @@
 
 # import time
 # import requests
+
 import os
 from os import environ
 import sys
 import json
 
+from time import sleep
 from loguru import logger as log
 from var_dump import var_dump
 
@@ -35,6 +37,7 @@ from settings import (
     TG_DROP_UPDATES,
     TG_PARSE_MODE,
     TG_TIMEOUT,
+    ALLOWED_UPDATES,
 )
 
 from commands import bot
@@ -59,7 +62,8 @@ app = FastAPI()
 
 def file_hash(filename=__file__):
     """utils"""
-    return sha(str(os.stat(filename)).encode("utf8")).hexdigest()
+    # return sha(str(os.stat(filename)).encode("utf8")).hexdigest()
+    return sha(str([os.stat(f) for f in os.scandir(".")]).encode("utf8")).hexdigest()
 
 
 def wh_url():
@@ -80,7 +84,6 @@ def wh_path():
     )
 
 
-@app.on_event("startup")  # не на всех версиях работает
 def set_webhook():
 
     global FILE_TOKEN, WEBHOOK_DOMAIN, WH_URL
@@ -97,6 +100,7 @@ def set_webhook():
         WH_URL = wh
 
         bot.remove_webhook()
+        sleep(0.9)
 
         if "webhook" == TG_MODE:
             # Marvin's Marvellous Guide to All Things Webhook
@@ -107,17 +111,16 @@ def set_webhook():
                 url=WH_URL,
                 # certificate=None,
                 max_connections=TG_MAX_CONNECTION,
-                allowed_updates=[],
-                # allowed_updates=ALLOWED_UPDATES,
+                # allowed_updates=[],
+                allowed_updates=ALLOWED_UPDATES,
                 # ip_address=None,
-                # drop_pending_updates=TG_DROP_UPDATES,
                 drop_pending_updates=TG_DROP_UPDATES,
                 # so it should wait as long as the maximum script execution time
                 # timeout=TG_TIMEOUT,
             )
         else:
             bot.polling(none_stop=True, timeout=TG_TIMEOUT)
-            # bot = telebot.TeleBot(TG_TOKEN, threaded=False, parse_mode=TG_PARSE_MODE)
+            # bot.infinity_polling(timeout=10, long_polling_timeout = 5)
 
     log.debug(bot.get_webhook_info())
 
@@ -137,7 +140,11 @@ WH_URL = wh_url()
 # Begin
 #
 
-# set_webhook()
+
+@app.on_event("startup")  # не на всех версиях работает
+async def app_on_event():
+    return set_webhook()
+
 
 # pylint: disable=unused-argument
 @app.post(WH_PATH, response_class=JSONResponse, status_code=200)
@@ -159,18 +166,23 @@ async def webhook(
         data = [types.Update.de_json(ju) for ju in [payload]]
         # data - Object of type Update is not JSON serializable
         var_dump("bot.process_new_updates")
-        var_dump(TG_MAX_CONNECTION)
+        var_dump(TG_MODE)
+        var_dump(TG_DROP_UPDATES)
         # var_dump(data)
 
-        bot.process_new_updates(data)
+        if "webhook" == TG_MODE:
+            sleep(0.3)
+            bot.process_new_updates(data)
+        else:
+            bot.get_updates()
+
         response.status_code = 200
 
-    else:
-        if "cron" in payload:
-            response.status_code = status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
-            bot.process_new_messages([])  # push the queue
-        else:
-            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    if "cron" in payload:
+        response.status_code = status.HTTP_203_NON_AUTHORITATIVE_INFORMATION
+        bot.process_new_messages([])  # push the queue
+    # else:
+    #     response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # return JSONResponse(
     #     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

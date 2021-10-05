@@ -41,11 +41,10 @@ class BasicModel(object):
     # public
     key = None  #    aka ROW_ID
 
+    # pylint: disable=W0613
+    # W0613: Unused arguments (unused-argument)
     def __new__(cls, *args, **kwargs):
-        # pylint: disable=W0613
-        # Unused arguments (unused-argument)
         cls.__init_driver()
-
         # TypeError: object.__new__() takes exactly one argument (the type to instantiate)
         return object.__new__(cls)
 
@@ -62,17 +61,19 @@ class BasicModel(object):
         Model()
         """
 
-        if len(args) > 0 and isinstance(args[0], dict):
-            self.__dict__.update(args[0])
-            if len(args) > 1:
-                self.key = str(args[1])
-        else:
-            if len(args) == 1:
-                self.key = str(args[0])
+        if len(args) > 0:
+            if isinstance(args[0], dict):
+                self.__dict__.update(args[0])
+            else:
+                self.value = args[0]
+        if len(args) > 1:  #   for what? model({data:}, key) hmm
+            self.key = str(args[1])
 
         self.__dict__.update(kwargs)
 
-        self.key = str(row_id() if not self.key else self.key)  # string only
+        # inclusive or exclusive key used - 'tis yet the question!
+        if self.key is None:
+            self.key = str(row_id())  # string only
 
         # !discussion
         # r = self._driver.get(self.key)  # try data raise
@@ -93,6 +94,7 @@ class BasicModel(object):
                 cls._tablename = cls.__name__
             if cls._driver is None:
                 cls._driver = __class__.__driver(cls._tablename)
+        return cls._driver
 
     def __dir__(self) -> dict:
         """dir() вернёт список легитимных атрибутов, а для избранных __dir__() вернет словарь данных"""
@@ -177,8 +179,7 @@ class BasicModel(object):
 
     @classmethod
     def find(cls, criteria=None, limit=1000, last_key=None):
-        cls.__init_driver()
-        r = cls._driver.fetch(query=criteria, limit=limit, last=last_key)
+        r = cls.__init_driver().fetch(query=criteria, limit=limit, last=last_key)
         # @TODO
 
         # if r.count>0:
@@ -236,8 +237,9 @@ class BasicModel(object):
 
         if r is None:
             r = {"key": key}
-        if len(r) == 2 and "key" in r and "value" in r and type("value") == dict:
-            r = dict({"key": key}, **dict(json.loads(r["value"])))
+        if len(r) == 2 and "key" in r and "value" in r and type(r["value"]) == dict:
+            # r {key: , value: }
+            r = dict(json.loads(r["value"]), **{"key": key})
         else:
             # smthng oblivious
             pass
@@ -253,7 +255,7 @@ class Record(BasicModel):
 
     # _save_on_exit = False
     _created = "now"
-    _expires = "in 3 days"
+    _expires = "in 1 week"
 
     limits = {"quantity": 1, "keys": 3}
 
@@ -263,7 +265,7 @@ class Record(BasicModel):
 
         self._id = id(self)
         self.created = dateparser(self._created) if not self.created else self.created
-        self.expires = dateparser(self._expires)
+        self.expires = dateparser(self._expires) if not self.created else self.created
 
     def id(self):
         return row_id()
